@@ -23,6 +23,8 @@ def get_tasks(device_id):
 
 if __name__ == '__main__':
     try:
-        app.run(port=os.environ['PORT'])
+        port = os.environ.get('PORT', 12345)
+        print(f'Starting at port: {port}')
+        app.run(port=port)
     except KeyError:
         app.run()
