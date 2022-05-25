@@ -13,7 +13,7 @@ def hello():
 @app.route('/tasks/<device_id>', methods=['GET'])
 def get_tasks(device_id):
     tasks = []
-    if (True or bool(getrandbits(1))):
+    if (bool(getrandbits(1))):
         tasks.append({ 'name': 'led_on', 'config': {} })
     else:
         tasks.append({ 'name': 'led_off', 'config': {} })
