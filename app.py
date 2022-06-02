@@ -12,7 +12,7 @@ app = Flask(__name__)
 logger = logging.getLogger()
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
-app.register_blueprint(devices_blueprint)
+app.register_blueprint(devices_blueprint, url_prefix='/devices')
 app.register_blueprint(api_blueprint, url_prefix='/api')
 
 @app.route('/')

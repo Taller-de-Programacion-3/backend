@@ -3,9 +3,13 @@
 
 # TODO: usar db real
 
-# -- Formato de registros
-# -- Asumimos que si no tiene valor es porque todavia no fue ejecutada.
-#
+KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon']
+
 # { <device_id>: { <task_name>: <task_value>, ... }}
 
 db = {}
+
+# Tareas pendientes a ser ejecutadas
+# por c/ dispositivo.
+
+pending_tasks = {d: set() for d in KNOWN_DEVICES_ID}
