@@ -3,4 +3,5 @@ requests==2.22.0
 Werkzeug>=2.0.0
 gunicorn==19.9.0
 SQLAlchemy==1.4
+alembic
 psycopg2

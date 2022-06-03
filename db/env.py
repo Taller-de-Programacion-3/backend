@@ -26,7 +26,7 @@ target_metadata = None
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-db_url = os.environ.get('DATABASE_URL')
+db_url = os.environ.get('DB_URL')
 
 config.set_section_option('alembic', 'sqlalchemy.url', db_url)
 
