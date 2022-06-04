@@ -1,6 +1,7 @@
-from flask import Blueprint, make_response, jsonify
+from flask import Blueprint, make_response, jsonify, request
 
 from db import db, pending_tasks, KNOWN_DEVICES_ID
+from db_helper import Task
 from tasks import build_task
 
 api_blueprint = Blueprint('api', __name__)
@@ -39,13 +40,14 @@ def queue_once():
 
     return make_response('ok', 200)
 
-@api_blueprint.route('/schedule-task', methods=['POST'])
-def schedule_task():
-    # Tareas periodicas.
+@api_blueprint.route('/task', methods=['POST','DELETE'])
+def task_endpoint():
+    if request.method == 'POST':
+        task = Task(device_id='test', name='led_on', exec_type='QUEUABLE')
+        task.insert()
+        return make_response('Created OK', 201)
+    elif request.method == 'DELETE':
+        # TODO Query to get task
+        task.delete()
+        return make_response('Deleted OK', 201)
 
-    return make_response('ok', 200)
-
-@api_blueprint.route('/remove-task', methods=['POST'])
-def remove_task():
-    # TODO
-    return make_response('ok', 200)

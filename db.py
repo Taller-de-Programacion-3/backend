@@ -3,7 +3,7 @@
 
 # TODO: usar db real
 
-KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon']
+KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon','test']
 
 # { <device_id>: { <task_name>: <task_value>, ... }}
 
