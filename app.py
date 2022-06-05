@@ -27,7 +27,7 @@ def hello():
         query_result = con.execute('SELECT * FROM tasks')
 
         for row in query_result:
-            print('row')
+            print(row)
 
     return 'Hello world'
 
