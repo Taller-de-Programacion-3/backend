@@ -1,15 +1,51 @@
-from datetime import datetime
+import enum
+import sqlalchemy as sa
 
-from sqlalchemy import Column, String, DateTime
-from sqlalchemy.orm import declarative_base
+from datetime import datetime
+from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
+class ResultStatus(enum.Enum):
+    pending = 'pending'
+    done = 'done'
+
+class ExecutionType(enum.Enum):
+    once = 'once'
+    periodic = 'periodic'
+
+class TaskStatus(enum.Enum):
+    active = 'active'
+    inactive = 'inactive'
+
+
 class TaskModel(Base):
+
     __tablename__ = 'tasks'
 
-    device_id = Column(String, nullable=False, primary_key=True)
-    name = Column(String, nullable=False, primary_key=True)
-    execution_type = Column(String, default='QUEUEABLE')
-    created = Column(DateTime, default=datetime.utcnow)
+    id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
+    name = sa.Column(sa.String, nullable=False)
+    created_at = sa.Column(sa.DateTime, default=datetime.utcnow)
 
+    execution_type = sa.Column(
+        sa.Enum(ExecutionType),
+        default=ExecutionType.once,
+        nullable=False
+    )
+    status = sa.Column(sa.Enum(TaskStatus), default=TaskStatus.active)
+
+    results = sa.orm.relationship('TaskResult')
+
+
+# Representa el resultado de una tarea. Si el dispositivo
+# no respondio se encontrara en estado pending.
+
+class TaskResultModel(Base):
+
+    __tablename__ = 'task_results'
+
+    id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
+    task_id = sa.Column(sa.Integer, sa.ForeignKey('tasks.id'))
+    value = sa.Column(sa.String)
+    device_id = sa.Column(sa.String, nullable=False)
+    status = sa.Column(sa.Enum(ResultStatus), default=ResultStatus.pending)
