@@ -19,21 +19,26 @@ class TaskStatus(enum.Enum):
     inactive = 'inactive'
 
 
+# Representa una tarea + configuracion para realizarse
+
 class TaskModel(Base):
 
     __tablename__ = 'tasks'
 
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
     name = sa.Column(sa.String, nullable=False)
-    created_at = sa.Column(sa.DateTime, default=datetime.utcnow)
+
+    created_at = sa.Column(
+        sa.DateTime, nullable=False, server_default=sa.text('NOW()')
+    )
 
     execution_type = sa.Column(
         sa.Enum(ExecutionType),
-        default=ExecutionType.once,
+        server_default='once',
         nullable=False
     )
-    status = sa.Column(sa.Enum(TaskStatus), default=TaskStatus.active)
 
+    status = sa.Column(sa.Enum(TaskStatus), server_default='active')
     results = sa.orm.relationship('TaskResult')
 
 
@@ -48,4 +53,5 @@ class TaskResultModel(Base):
     task_id = sa.Column(sa.Integer, sa.ForeignKey('tasks.id'))
     value = sa.Column(sa.String)
     device_id = sa.Column(sa.String, nullable=False)
-    status = sa.Column(sa.Enum(ResultStatus), default=ResultStatus.pending)
+
+    status = sa.Column(sa.Enum(ResultStatus), server_default='pending')

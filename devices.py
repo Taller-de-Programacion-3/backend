@@ -2,6 +2,9 @@ import json
 import logging
 import random
 import tasks
+import sqlalchemy as sa
+
+from datamodel import TaskResultModel, ResultStatus
 
 from flask import Blueprint, jsonify, request, make_response
 from db import db, pending_tasks
@@ -11,6 +14,7 @@ devices_blueprint = Blueprint('devices', __name__)
 logger = logging.getLogger()
 
 def get_device_tasks(device_id):
+
     # Busca las tareas que tiene que ejecutar cierto dispositivo.
 
     device_tasks = pending_tasks.get(device_id)
