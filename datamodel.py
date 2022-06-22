@@ -1,10 +1,13 @@
+import os
 import enum
 import sqlalchemy as sa
 
 from datetime import datetime
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+db_url = os.environ.get('DB_URL')
+engine = create_engine(db_url)
 
 class ResultStatus(enum.Enum):
     pending = 'pending'
@@ -18,6 +21,8 @@ class TaskStatus(enum.Enum):
     active = 'active'
     inactive = 'inactive'
 
+
+Base = declarative_base()
 
 # Representa una tarea + configuracion para realizarse
 
@@ -39,7 +44,7 @@ class TaskModel(Base):
     )
 
     status = sa.Column(sa.Enum(TaskStatus), server_default='active')
-    results = sa.orm.relationship('TaskResult')
+    results = sa.orm.relationship('TaskResultModel')
 
 
 # Representa el resultado de una tarea. Si el dispositivo

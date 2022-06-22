@@ -1,25 +1,20 @@
 import sys
 import os
-import logging
 import random
+import logging
 
 from flask import Flask
 from devices import devices_blueprint
 from api import api_blueprint
 
-from sqlalchemy import create_engine
 
-db_url = os.environ.get('DB_URL')
-
+from datamodel import engine
 app = Flask(__name__)
-
-logger = logging.getLogger()
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
-
 app.register_blueprint(devices_blueprint, url_prefix='/devices')
 app.register_blueprint(api_blueprint, url_prefix='/api')
 
-engine = create_engine(db_url)
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger()
 
 @app.route('/')
 def hello():
