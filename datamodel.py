@@ -9,6 +9,8 @@ from sqlalchemy.ext.declarative import declarative_base
 db_url = os.environ.get('DB_URL')
 engine = create_engine(db_url)
 
+Base = declarative_base()
+
 class ResultStatus(enum.Enum):
     pending = 'pending'
     done = 'done'
@@ -21,8 +23,6 @@ class TaskStatus(enum.Enum):
     active = 'active'
     inactive = 'inactive'
 
-
-Base = declarative_base()
 
 # Representa una tarea + configuracion para realizarse
 
