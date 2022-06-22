@@ -4,7 +4,7 @@ Currently deployed at https://taller3-backend.herokuapp.com/
 
 ## Setup
 
-Se requiere tener `python` y `pip` instalados ademaás de una versión corriendo de PostgreSQL. Para el resto de las dependencias localmente correr:
+Se requiere tener `python` y `pip` instalados además de una versión corriendo de PostgreSQL. Para el resto de las dependencias localmente correr:
 ```pip install -r requirements.txt```
 
 Una vez instaladas tenemos que correr las migraciones:
@@ -19,4 +19,16 @@ Para generar una nueva migración correr el siguiente comando:
 
 ```bash
 $ alembic revision -m "<Descripción del cambio>"
+```
+
+Se pueden tambien generar las migraciones en base a los modelos, para esto correr
+
+```bash
+DB_URL=postgresql://<usuario postgres>:<contraseña>@localhost/<nombre db> alembic revision --autogenerate
+```
+
+## Levantar la app
+
+```bash
+DB_URL=postgresql://<usuario postgres>:<contraseña>@localhost/<nombre db> FLASK_APP=app.py FLASK_ENV=development flask run
 ```
