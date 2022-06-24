@@ -5,3 +5,4 @@ gunicorn==19.9.0
 SQLAlchemy==1.4
 alembic
 psycopg2
+python-dotenv

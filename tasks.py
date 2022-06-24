@@ -29,8 +29,4 @@ def build_task(task_name):
     return Task(task_name)
 
 def serialize_task(task):
-    return {
-        'id': task.uuid,
-        'name': task.name,
-        'config': {},
-    }
+    return { 'id': task.id }
