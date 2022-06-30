@@ -23,6 +23,11 @@ class TaskStatus(enum.Enum):
     active = 'active'
     inactive = 'inactive'
 
+class SenseMode(enum.Enum):
+    single = 'single'
+    max = 'max'
+    min = 'min'
+    average = 'average'
 
 # Representa una tarea + configuracion para realizarse
 
@@ -43,8 +48,15 @@ class TaskModel(Base):
         nullable=False
     )
 
-    status = sa.Column(sa.Enum(TaskStatus), server_default='active')
-    results = sa.orm.relationship('TaskResultModel')
+    status = sa.Column(sa.Enum(TaskStatus), server_default='active', nullable=False)
+    results = sa.orm.relationship('TaskResultModel', cascade='all, delete')
+
+    # Campos para tarea de sensado
+
+    sense_metric = sa.Column(sa.String)
+    sense_mode = sa.Column(sa.Enum(SenseMode))
+    sense_sample_rate = sa.Column(sa.Float) # sample/sec
+    sense_n_samples = sa.Column(sa.Integer)
 
 
 # Representa el resultado de una tarea. Si el dispositivo
@@ -55,7 +67,7 @@ class TaskResultModel(Base):
     __tablename__ = 'task_results'
 
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
-    task_id = sa.Column(sa.Integer, sa.ForeignKey('tasks.id'))
+    task_id = sa.Column(sa.Integer, sa.ForeignKey('tasks.id', ondelete='CASCADE'))
     value = sa.Column(sa.String)
     device_id = sa.Column(sa.String, nullable=False)
 
