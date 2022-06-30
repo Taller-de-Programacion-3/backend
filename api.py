@@ -22,7 +22,7 @@ def build_measurements():
 
 
 def handle_create_task(body):
-    logger.info(f'Creando tarea "led_on"...')
+    logger.info('Creando tarea {}...'.format(body.get('task_name')))
     execution_type = ExecutionType.periodic if body.get('periodic') else ExecutionType.once
     sense_config = {}
     if body.get('sense_config') is not None:
