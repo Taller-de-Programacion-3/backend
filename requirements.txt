@@ -6,3 +6,4 @@ SQLAlchemy==1.4
 alembic
 psycopg2
 python-dotenv
+flask-cors==3.0.10
