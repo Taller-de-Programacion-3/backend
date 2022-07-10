@@ -3,11 +3,13 @@ import logging
 
 from dotenv import load_dotenv
 from flask import Flask
+from flask_cors import CORS
 
 from devices import devices_blueprint
 from api import api_blueprint
 
 app = Flask(__name__)
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 app.register_blueprint(devices_blueprint, url_prefix='/devices')
 app.register_blueprint(api_blueprint, url_prefix='/api')
@@ -16,6 +18,9 @@ app.register_blueprint(api_blueprint, url_prefix='/api')
 
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger()
+
+# Seteamos el logger de CORS en debug.
+# logging.getLogger('flask_cors').level = logging.DEBUG
 
 # Cargamos las variables de entorno.
 
