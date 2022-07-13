@@ -1,10 +1,9 @@
-import logging
 import json
-from sqlalchemy import null
+import logging
+from json import JSONDecodeError
 
-from sqlalchemy.orm import Session
 from flask import Blueprint, make_response, jsonify, request
-from tasks import build_task
+from sqlalchemy.orm import Session
 
 from datamodel import ExecutionType, engine, TaskModel, TaskResultModel
 
@@ -81,16 +80,18 @@ def handle_modify_task(body):
     return make_response('Modified OK', 200)
 
 
-def row2dict(row):
+def row2dict(row: TaskModel):
     d = {}
     for column in row.__table__.columns:
-        d[column.name] = str(getattr(row, column.name))
-
+        val = row.__getattribute__(column.name)
+        try:
+            d[column.name] = json.loads(val)
+        except (TypeError, JSONDecodeError):
+            d[column.name] = val
     return d
 
 
 def handle_get_active_tasks():
-    # query = select(TaskModel).where(TaskModel.status == 'active')
     with Session(engine) as session:
         results = []
         for row in session.query(TaskModel).filter(TaskModel.status == 'active'):
@@ -114,16 +115,13 @@ def task():
         if request.method == 'POST':
             return handle_create_task(body)
 
-        if request.method == 'POST':
-            return handle_create_task(body)
-
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             return handle_remove_task(body)
 
-        elif request.method == 'PATCH':
+        if request.method == 'PATCH':
             return handle_modify_task(body)
 
-        elif request.method == 'GET':
+        if request.method == 'GET':
             return handle_get_active_tasks()
 
     except RuntimeError:
