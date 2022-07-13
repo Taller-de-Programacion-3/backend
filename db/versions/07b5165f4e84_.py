@@ -10,8 +10,6 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-from sqlalchemy.dialects.postgresql import JSON
-
 revision = '07b5165f4e84'
 down_revision = None
 branch_labels = None
@@ -26,7 +24,10 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('NOW()'), nullable=False),
     sa.Column('execution_type', sa.Enum('once', 'periodic', name='executiontype'), server_default='once', nullable=False),
     sa.Column('status', sa.Enum('active', 'inactive', name='taskstatus'), server_default='active', nullable=False),
-    sa.Column('task_params', JSON(), nullable=False),
+    sa.Column('sense_metric', sa.String(), nullable=True),
+    sa.Column('sense_mode', sa.Enum('single', 'max', 'min', 'average', name='sensemode'), nullable=True),
+    sa.Column('sense_sample_rate', sa.Float(), nullable=True),
+    sa.Column('sense_n_samples', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('task_results',
