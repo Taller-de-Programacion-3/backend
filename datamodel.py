@@ -4,6 +4,7 @@ import sqlalchemy as sa
 
 from datetime import datetime
 from sqlalchemy import create_engine
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 
 db_url = os.environ.get('DB_URL')
@@ -51,12 +52,9 @@ class TaskModel(Base):
     status = sa.Column(sa.Enum(TaskStatus), server_default='active', nullable=False)
     results = sa.orm.relationship('TaskResultModel', cascade='all, delete')
 
-    # Campos para tarea de sensado
+    # Campo para data arbitraria de la tarea
 
-    sense_metric = sa.Column(sa.String)
-    sense_mode = sa.Column(sa.Enum(SenseMode))
-    sense_sample_rate = sa.Column(sa.Float) # sample/sec
-    sense_n_samples = sa.Column(sa.Integer)
+    task_params = sa.Column(JSON)
 
 
 # Representa el resultado de una tarea. Si el dispositivo
