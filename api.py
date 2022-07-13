@@ -80,6 +80,24 @@ def handle_modify_task(body):
         session.commit()
     return make_response('Modified OK', 200)
 
+
+def row2dict(row):
+    d = {}
+    for column in row.__table__.columns:
+        d[column.name] = str(getattr(row, column.name))
+
+    return d
+
+
+def handle_get_active_tasks():
+    # query = select(TaskModel).where(TaskModel.status == 'active')
+    with Session(engine) as session:
+        results = []
+        for row in session.query(TaskModel).filter(TaskModel.status == 'active'):
+            results.append(row2dict(row))
+        return make_response(jsonify(results))
+
+
 api_blueprint = Blueprint('api', __name__)
 
 @api_blueprint.route('/measurements', methods=['GET'])
@@ -88,10 +106,14 @@ def get_measures():
     return make_response(jsonify(measurements), 200)
 
 
-@api_blueprint.route('/task', methods=['POST','DELETE','PATCH'])
+@api_blueprint.route('/task', methods=['POST', 'DELETE', 'PATCH', 'GET'])
 def task():
     try:
-        body = json.loads(request.data)
+        body = json.loads(request.data) if request.data else {}
+
+        if request.method == 'POST':
+            return handle_create_task(body)
+
         if request.method == 'POST':
             return handle_create_task(body)
 
@@ -101,6 +123,10 @@ def task():
         elif request.method == 'PATCH':
             return handle_modify_task(body)
 
+        elif request.method == 'GET':
+            return handle_get_active_tasks()
+
     except RuntimeError:
         return make_response("Invalid params", 400)
+
 
