@@ -45,14 +45,14 @@ def store_task_results(device_id, results):
 
         # Actualizamos los resultados.
 
+        f = TaskResultModel.device_id == device_id,
+        TaskResultModel.status == ResultStatus.pending,
+        TaskResultModel.id == result_id
+
         with Session(engine) as session:
             session \
                 .query(TaskResultModel) \
-                .filter(
-                    TaskResultModel.device_id == device_id,
-                    TaskResultModel.status == ResultStatus.pending,
-                    TaskResultModel.id == result_id
-                ) \
+                .filter(f) \
                 .update({ 'value': result_value, 'status': ResultStatus.done })
 
             session.commit()

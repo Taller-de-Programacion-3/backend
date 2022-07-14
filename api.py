@@ -8,7 +8,7 @@ from tasks import build_task
 
 from datamodel import ExecutionType, engine, TaskModel, TaskResultModel
 
-KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon','test']
+KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon']
 
 logger = logging.getLogger()
 
@@ -22,11 +22,22 @@ def build_measurements():
 
 
 def handle_create_task(body):
-    logger.info('Creando tarea {}...'.format(body.get('task_name')))
+    # Lista de dispositivos en los que se carga la tarea.
+    devices_ids = body.get('device_ids')
+
+    for id in devices_ids:
+        if id not in KNOWN_DEVICES_ID:
+            raise RuntimeError("Invalid device id")
+
+    if not body.get("task_name") or not body.get("device_ids"):
+        raise RuntimeError("Invalid empty params")
+
+    logger.info(f'Creando tarea {body.get("task_name")} para {devices_ids}')
+
     execution_type = ExecutionType.periodic if body.get('periodic') else ExecutionType.once
-    sense_config = {}
-    if body.get('sense_config') is not None:
-        sense_config = body.get('sense_config')
+
+    sense_config = body.get('sense_config') if body.get('sense_config') else {}
+
     task = TaskModel(
         name = body.get('task_name'),
         execution_type = execution_type,
@@ -35,10 +46,15 @@ def handle_create_task(body):
         sense_sample_rate = sense_config.get('sense_sample_rate'),
         sense_n_samples = sense_config.get('sense_n_samples')
     )
+
     with Session(engine) as session:
         session.add(task)
-        session.commit()
-        task_results = [TaskResultModel(task_id=task.id, device_id=device_id) for device_id in KNOWN_DEVICES_ID]
+
+        # TODO. validar ids
+        task_results = [
+            TaskResultModel(task_id=task.id, device_id=device_id) for device_id in devices_ids
+        ]
+
         session.add_all(task_results)
         session.commit()
 
@@ -71,13 +87,17 @@ def get_measures():
 
 @api_blueprint.route('/task', methods=['POST','DELETE','PATCH'])
 def task():
-    body = json.loads(request.data)
-    if request.method == 'POST':
-        return handle_create_task(body)
+    try:
+        body = json.loads(request.data)
+        if request.method == 'POST':
+            return handle_create_task(body)
 
-    elif request.method == 'DELETE':
-        return handle_remove_task(body)
+        elif request.method == 'DELETE':
+            return handle_remove_task(body)
 
-    elif request.method == 'PATCH':
-        return handle_modify_task(body)
+        elif request.method == 'PATCH':
+            return handle_modify_task(body)
+
+    except RuntimeError:
+        return make_response("Invalid params", 400)
 
