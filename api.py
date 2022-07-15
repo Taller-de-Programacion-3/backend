@@ -49,7 +49,8 @@ def handle_create_task(body):
     with Session(engine) as session:
         session.add(task)
 
-        # TODO. validar ids
+        
+        session.commit()    # Need to commit to link by task.id
         task_results = [
             TaskResultModel(task_id=task.id, device_id=device_id) for device_id in devices_ids
         ]
