@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from flask import Blueprint, jsonify, request, make_response
 
-from datamodel import ExecutionType, TaskModel, engine, TaskResultModel, ResultStatus
+from datamodel import ExecutionType, TaskModel, TaskStatus, engine, TaskResultModel, ResultStatus
 
 devices_blueprint = Blueprint('devices', __name__)
 
@@ -57,11 +57,13 @@ def store_task_results(device_id, results):
         for q_res in query_result:
             q_res.status = ResultStatus.done
             q_res.value = map_results.get(q_res.id)
+            q_res.task.status = TaskStatus.inactive
    
             # Generamos un nuevo resultado pendiente si la tarea asociada es periodica.
             if q_res.task.execution_type == ExecutionType.periodic:
                 logger.info(f'Creating new pending result for periodic task {q_res.task.id}')
                 next_results.append(TaskResultModel(task_id=q_res.task.id, device_id=device_id))
+                q_res.task.status = TaskStatus.active
 
         session.add_all(next_results)
         session.commit()
