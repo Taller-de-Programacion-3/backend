@@ -18,22 +18,22 @@ def get_device_tasks(device_id):
 
     # Busca las tareas que tiene que ejecutar cierto dispositivo.
 
-    results = []
 
+    serialized_results = []
     with Session(engine) as session:
-        query = sa.select(TaskResultModel).where(
+        query = sa.select(TaskResultModel).join(TaskResultModel.task).where(
             TaskResultModel.device_id == device_id,
             TaskResultModel.status == ResultStatus.pending
         )
         results = session.execute(query)
         results = results.scalars().all()
-
+        serialized_results = [tasks.serialize_task(res) for res in results]
     # tasks = [
     #     tasks.READ_INPUT,
     #     tasks.LED_ON_TASK if random.getrandbits(1) else tasks.LED_OFF_TASK
     # ]
 
-    return results
+    return serialized_results
 
 def store_task_results(device_id, results):
     # Guarda los resultados de las tareas
@@ -83,6 +83,6 @@ def tasks_endpoint(device_id):
         return make_response(jsonify('ok'), 200)
     else:
 
-        _tasks = map(lambda task: tasks.serialize_task(task), get_device_tasks(device_id))
+        _tasks = get_device_tasks(device_id)
 
         return make_response(jsonify(tasks=list(_tasks)), 200)
