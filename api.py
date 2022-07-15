@@ -25,12 +25,17 @@ def handle_create_task(body):
     # Lista de dispositivos en los que se carga la tarea.
     devices_ids = body.get('device_ids')
 
+    print(body)
+
     for id in devices_ids:
         if id not in KNOWN_DEVICES_ID:
-            raise RuntimeError("Invalid device id")
+            return "Invalid device id", 400
+
+    if len(devices_ids) < 1:
+        return 'Must add at least one device Id', 400
 
     if not body.get("task_name") or not body.get("device_ids"):
-        raise RuntimeError("Invalid empty params")
+        return "Invalid empty params", 400
 
     logger.info(f'Creando tarea {body.get("task_name")} para {devices_ids}')
 
