@@ -8,7 +8,7 @@ from tasks import build_task
 
 from datamodel import ExecutionType, engine, TaskModel, TaskResultModel
 
-KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon']
+KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon', 'test']
 
 logger = logging.getLogger()
 
@@ -36,15 +36,14 @@ def handle_create_task(body):
 
     execution_type = ExecutionType.periodic if body.get('periodic') else ExecutionType.once
 
-    sense_config = body.get('sense_config') if body.get('sense_config') else {}
+    task_params = {}
+    if body.get('task_params') is not None:
+        task_params = body.get('task_params')
 
     task = TaskModel(
-        name = body.get('task_name'),
-        execution_type = execution_type,
-        sense_metric = sense_config.get('sense_metric'),
-        sense_mode = sense_config.get('sense_mode'),
-        sense_sample_rate = sense_config.get('sense_sample_rate'),
-        sense_n_samples = sense_config.get('sense_n_samples')
+        name=body.get('task_name'),
+        execution_type=execution_type,
+        task_params=task_params
     )
 
     with Session(engine) as session:
