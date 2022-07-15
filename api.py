@@ -25,8 +25,6 @@ def handle_create_task(body):
     # Lista de dispositivos en los que se carga la tarea.
     devices_ids = body.get('device_ids')
 
-    print(body)
-
     for id in devices_ids:
         if id not in KNOWN_DEVICES_ID:
             return "Invalid device id", 400
