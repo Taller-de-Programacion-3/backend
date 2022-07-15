@@ -12,7 +12,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"device_id\": \"AGSD374665\",\n    \"task_name\": \"SENSAR\",\n    \"periodic\": true,\n    \"sense_config\": {\n        \"sense_metric\": \"Temperature\",\n        \"sense_mode\": \"single\",\n        \"sense_sample_rate\": 0.1,\n        \"sense_n_samples\": 1\n    }\n}",
+					"raw": "{\n    \"device_ids\": [\"riscv\"],\n    \"task_name\": \"SENSAR\",\n    \"periodic\": false,\n    \"task_params\": {\n        \"sense_metric\": \"Temperature\",\n        \"sense_mode\": \"single\",\n        \"sense_sample_rate\": 0.1,\n        \"sense_n_samples\": 1\n    }\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -81,6 +81,53 @@
 					"path": [
 						"api",
 						"task"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get device pending tasks",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{backend_url}}/devices/tasks/riscv",
+					"host": [
+						"{{backend_url}}"
+					],
+					"path": [
+						"devices",
+						"tasks",
+						"riscv"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Post device tasks results",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    {\n        \"id\": 5,\n        \"value\": \"87\"\n    }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{backend_url}}/devices/tasks/riscv",
+					"host": [
+						"{{backend_url}}"
+					],
+					"path": [
+						"devices",
+						"tasks",
+						"riscv"
 					]
 				}
 			},

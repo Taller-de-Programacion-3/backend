@@ -50,7 +50,7 @@ class TaskModel(Base):
     )
 
     status = sa.Column(sa.Enum(TaskStatus), server_default='active', nullable=False)
-    results = sa.orm.relationship('TaskResultModel', cascade='all, delete')
+    results = sa.orm.relationship('TaskResultModel', cascade='all, delete', back_populates='task')
 
     # Campo para data arbitraria de la tarea
 
@@ -66,6 +66,7 @@ class TaskResultModel(Base):
 
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
     task_id = sa.Column(sa.Integer, sa.ForeignKey('tasks.id', ondelete='CASCADE'))
+    task = sa.orm.relationship('TaskModel', back_populates='results')
     value = sa.Column(sa.String)
     device_id = sa.Column(sa.String, nullable=False)
 
