@@ -40,8 +40,6 @@ def handle_create_task(body):
     if body.get('task_params') is not None:
         task_params = body.get('task_params')
 
-    sense_config = body.get('sense_config') if body.get('sense_config') else {}
-    
     task = TaskModel(
         name=body.get('task_name'),
         execution_type=execution_type,
