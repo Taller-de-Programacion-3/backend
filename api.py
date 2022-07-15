@@ -22,20 +22,40 @@ def build_measurements():
 
 
 def handle_create_task(body):
-    logger.info('Creando tarea {}...'.format(body.get('task_name')))
+    # Lista de dispositivos en los que se carga la tarea.
+    devices_ids = body.get('device_ids')
+
+    for id in devices_ids:
+        if id not in KNOWN_DEVICES_ID:
+            raise RuntimeError("Invalid device id")
+
+    if not body.get("task_name") or not body.get("device_ids"):
+        raise RuntimeError("Invalid empty params")
+
+    logger.info(f'Creando tarea {body.get("task_name")} para {devices_ids}')
+
     execution_type = ExecutionType.periodic if body.get('periodic') else ExecutionType.once
+
     task_params = {}
     if body.get('task_params') is not None:
         task_params = body.get('task_params')
+
+    sense_config = body.get('sense_config') if body.get('sense_config') else {}
+    
     task = TaskModel(
         name=body.get('task_name'),
         execution_type=execution_type,
         task_params=task_params
     )
+
     with Session(engine) as session:
         session.add(task)
-        session.commit()
-        task_results = [TaskResultModel(task_id=task.id, device_id=device_id) for device_id in KNOWN_DEVICES_ID]
+
+        # TODO. validar ids
+        task_results = [
+            TaskResultModel(task_id=task.id, device_id=device_id) for device_id in devices_ids
+        ]
+
         session.add_all(task_results)
         session.commit()
 
@@ -68,13 +88,17 @@ def get_measures():
 
 @api_blueprint.route('/task', methods=['POST','DELETE','PATCH'])
 def task():
-    body = json.loads(request.data)
-    if request.method == 'POST':
-        return handle_create_task(body)
+    try:
+        body = json.loads(request.data)
+        if request.method == 'POST':
+            return handle_create_task(body)
 
-    elif request.method == 'DELETE':
-        return handle_remove_task(body)
+        elif request.method == 'DELETE':
+            return handle_remove_task(body)
 
-    elif request.method == 'PATCH':
-        return handle_modify_task(body)
+        elif request.method == 'PATCH':
+            return handle_modify_task(body)
+
+    except RuntimeError:
+        return make_response("Invalid params", 400)
 
