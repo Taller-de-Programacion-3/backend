@@ -80,23 +80,44 @@ def handle_modify_task(body):
     return make_response('Modified OK', 200)
 
 
-def row2dict(row: TaskModel):
-    d = {}
-    for column in row.__table__.columns:
-        val = row.__getattribute__(column.name)
-        try:
-            d[column.name] = json.loads(val)
-        except (TypeError, JSONDecodeError):
-            d[column.name] = val
-    return d
+# DTOs para las clases
 
+def normalize_task_result(r: TaskResultModel):
+    return { 'id': r.id, 'value': r.value, 'device_id': r.device_id }
 
+def normalize_task(task: TaskModel):
+    return {
+        'name': task.name,
+        'execution_type': task.execution_type,
+        'results': [normalize_task_result(r) for r in task.results],
+        'status': task.status
+    }
+
+# { device_id: <device_id>, task_name: <task_name>, perio}
 def handle_get_active_tasks():
-    with Session(engine) as session:
-        results = []
-        for row in session.query(TaskModel).filter(TaskModel.status == 'active'):
-            results.append(row2dict(row))
-        return make_response(jsonify(results))
+
+    f = TaskModel.status == 'active'
+
+    with Session(engine) as s:
+        tasks = [normalize_task(t) for t in s.query(TaskModel).filter(f)]
+
+        logger.info(f"Returning about: {len(tasks)} tasks")
+
+        response = []
+
+        for t in tasks:
+            for r in t['results']:
+                response.append(
+                    {
+                        'task_name': t['name'],
+                        'device_id': r['device_id'],
+                        'status': t['status'],
+                        'execution_type': t['execution_type'],
+                    }
+                )
+
+
+        return make_response(jsonify(response))
 
 
 api_blueprint = Blueprint('api', __name__)
