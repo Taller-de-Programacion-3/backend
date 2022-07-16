@@ -32,5 +32,5 @@ DB_URL=postgresql://<usuario postgres>:<contraseña>@localhost/<nombre db> alemb
 Para levantar hay que tener generar un `.env` en base al `.env.example`.
 
 ```bash
-flask run
+FLASK_ENV=development FLASK_APP=app.py flask run
 ```
