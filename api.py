@@ -1,5 +1,7 @@
 import json
 import logging
+import datetime
+
 from json import JSONDecodeError
 
 from flask import Blueprint, make_response, jsonify, request
@@ -50,8 +52,6 @@ def handle_create_task(body):
 
     with Session(engine) as session:
         session.add(task)
-
-        
         session.commit()    # Need to commit to link by task.id
         task_results = [
             TaskResultModel(task_id=task.id, device_id=device_id) for device_id in devices_ids
@@ -90,7 +90,9 @@ def normalize_task(task: TaskModel):
         'name': task.name,
         'execution_type': task.execution_type,
         'results': [normalize_task_result(r) for r in task.results],
-        'status': task.status
+        'status': task.status,
+        'params': task.task_params,
+        'created_at': task.created_at.isoformat(),
     }
 
 # { device_id: <device_id>, task_name: <task_name>, perio}
@@ -101,7 +103,7 @@ def handle_get_active_tasks():
     with Session(engine) as s:
         tasks = [normalize_task(t) for t in s.query(TaskModel).filter(f)]
 
-        logger.info(f"Returning about: {len(tasks)} tasks")
+        logger.info(f"Devolviendo: {len(tasks)} tareas activas")
 
         response = []
 
@@ -110,9 +112,11 @@ def handle_get_active_tasks():
                 response.append(
                     {
                         'task_name': t['name'],
+                        'task_created_at': t['created_at'],
                         'device_id': r['device_id'],
                         'status': t['status'],
                         'execution_type': t['execution_type'],
+                        'params': t['params'],
                     }
                 )
 
