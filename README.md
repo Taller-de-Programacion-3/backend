@@ -10,7 +10,8 @@ Se requiere tener `python` y `pip` instalados además de una versión corriendo 
 Una vez instaladas tenemos que correr las migraciones:
 
 ```bash
-DB_URL=postgresql://<usuario postgres>:<contraseña>@localhost/<nombre base de datos> alembic upgrade head
+export DB_URL=postgresql://<usuario postgres>:<contraseña>@localhost/<nombre base de datos>
+alembic upgrade head
 ```
 
 ## Migraciones
@@ -24,7 +25,8 @@ $ alembic revision -m "<Descripción del cambio>"
 Se pueden tambien generar las migraciones en base a los modelos, para esto correr
 
 ```bash
-DB_URL=postgresql://<usuario postgres>:<contraseña>@localhost/<nombre db> alembic revision --autogenerate
+export DB_URL=postgresql://<usuario postgres>:<contraseña>@localhost/<nombre db> 
+alembic revision --autogenerate
 ```
 
 ## Levantar la app
@@ -32,5 +34,10 @@ DB_URL=postgresql://<usuario postgres>:<contraseña>@localhost/<nombre db> alemb
 Para levantar hay que tener generar un `.env` en base al `.env.example`.
 
 ```bash
-FLASK_ENV=development FLASK_APP=app.py flask run
+export FLASK_ENV=development 
+export FLASK_APP=app.py 
+
+flask run
+or 
+python3 app.py
 ```
