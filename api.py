@@ -7,7 +7,7 @@ from json import JSONDecodeError
 from flask import Blueprint, make_response, jsonify, request
 from sqlalchemy.orm import Session
 
-from datamodel import ExecutionType, engine, TaskModel, TaskResultModel
+from datamodel import ExecutionType, TaskStatus, engine, TaskModel, TaskResultModel
 
 KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon', 'test']
 
@@ -98,7 +98,7 @@ def normalize_task(task: TaskModel):
 # { device_id: <device_id>, task_name: <task_name>, perio}
 def handle_get_active_tasks():
 
-    f = TaskModel.status == 'active'
+    f = TaskModel.status == TaskStatus.active
 
     with Session(engine) as s:
         tasks = [normalize_task(t) for t in s.query(TaskModel).filter(f)]
