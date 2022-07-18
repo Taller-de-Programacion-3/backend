@@ -1,10 +1,11 @@
-import logging
 import json
-from sqlalchemy import null
+import logging
+import datetime
 
-from sqlalchemy.orm import Session
+from json import JSONDecodeError
+
 from flask import Blueprint, make_response, jsonify, request
-from tasks import build_task
+from sqlalchemy.orm import Session
 
 from datamodel import ExecutionType, engine, TaskModel, TaskResultModel
 
@@ -51,8 +52,6 @@ def handle_create_task(body):
 
     with Session(engine) as session:
         session.add(task)
-
-        
         session.commit()    # Need to commit to link by task.id
         task_results = [
             TaskResultModel(task_id=task.id, device_id=device_id) for device_id in devices_ids
@@ -80,6 +79,51 @@ def handle_modify_task(body):
         session.commit()
     return make_response('Modified OK', 200)
 
+
+# DTOs para las clases
+
+def normalize_task_result(r: TaskResultModel):
+    return { 'id': r.id, 'value': r.value, 'device_id': r.device_id }
+
+def normalize_task(task: TaskModel):
+    return {
+        'name': task.name,
+        'execution_type': task.execution_type,
+        'results': [normalize_task_result(r) for r in task.results],
+        'status': task.status,
+        'params': task.task_params,
+        'created_at': task.created_at.isoformat(),
+    }
+
+# { device_id: <device_id>, task_name: <task_name>, perio}
+def handle_get_active_tasks():
+
+    f = TaskModel.status == 'active'
+
+    with Session(engine) as s:
+        tasks = [normalize_task(t) for t in s.query(TaskModel).filter(f)]
+
+        logger.info(f"Devolviendo: {len(tasks)} tareas activas")
+
+        response = []
+
+        for t in tasks:
+            for r in t['results']:
+                response.append(
+                    {
+                        'task_name': t['name'],
+                        'task_created_at': t['created_at'],
+                        'device_id': r['device_id'],
+                        'status': t['status'],
+                        'execution_type': t['execution_type'],
+                        'params': t['params'],
+                    }
+                )
+
+
+        return make_response(jsonify(response))
+
+
 api_blueprint = Blueprint('api', __name__)
 
 @api_blueprint.route('/measurements', methods=['GET'])
@@ -88,19 +132,24 @@ def get_measures():
     return make_response(jsonify(measurements), 200)
 
 
-@api_blueprint.route('/task', methods=['POST','DELETE','PATCH'])
+@api_blueprint.route('/task', methods=['POST', 'DELETE', 'PATCH', 'GET'])
 def task():
     try:
-        body = json.loads(request.data)
+        body = json.loads(request.data) if request.data else {}
+
         if request.method == 'POST':
             return handle_create_task(body)
 
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             return handle_remove_task(body)
 
-        elif request.method == 'PATCH':
+        if request.method == 'PATCH':
             return handle_modify_task(body)
+
+        if request.method == 'GET':
+            return handle_get_active_tasks()
 
     except RuntimeError:
         return make_response("Invalid params", 400)
+
 

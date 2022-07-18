@@ -12,19 +12,19 @@ engine = create_engine(db_url)
 
 Base = declarative_base()
 
-class ResultStatus(enum.Enum):
+class ResultStatus(str, enum.Enum):
     pending = 'pending'
     done = 'done'
 
-class ExecutionType(enum.Enum):
+class ExecutionType(str, enum.Enum):
     once = 'once'
     periodic = 'periodic'
 
-class TaskStatus(enum.Enum):
+class TaskStatus(str, enum.Enum):
     active = 'active'
     inactive = 'inactive'
 
-class SenseMode(enum.Enum):
+class SenseMode(str, enum.Enum):
     single = 'single'
     max = 'max'
     min = 'min'
