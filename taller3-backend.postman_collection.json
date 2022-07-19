@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "a465a48c-e86c-4e2f-8963-015c79718329",
+		"_postman_id": "8bc1170b-cad6-4ef2-b955-f06825437ea0",
 		"name": "taller3-mendez",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -73,6 +73,24 @@
 						}
 					}
 				},
+				"url": {
+					"raw": "{{backend_url}}/api/task",
+					"host": [
+						"{{backend_url}}"
+					],
+					"path": [
+						"api",
+						"task"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get active tasks",
+			"request": {
+				"method": "GET",
+				"header": [],
 				"url": {
 					"raw": "{{backend_url}}/api/task",
 					"host": [
