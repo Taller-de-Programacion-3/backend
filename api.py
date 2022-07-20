@@ -22,21 +22,24 @@ def build_measurements():
 
         metrics = {}
 
+
         for result, task in results:
+            if result.device_id not in metrics:
+                metrics[result.device_id] = {}
             if task.name == 'Sense':
                 metric = task.task_params['sense_metric']
-                if metric not in metrics:
-                    metrics[metric] = []
-                metrics[metric].append({
+                if metric not in metrics[result.device_id]:
+                    metrics[result.device_id][metric] = []
+                metrics[result.device_id][metric].append({
                     'value': result.value,
-                    'timestamp': task.created_at,
+                    'timestamp': result.completed_at,
                 })
             if task.name == 'Led On' or task.name == 'Led Off':
-                if 'led' not in metrics:
-                    metrics['led'] = []
-                metrics['led'].append({
+                if 'led' not in metrics[result.device_id]:
+                    metrics[result.device_id]['led'] = []
+                metrics[result.device_id]['led'].append({
                     'value': 1 if task.name == 'Led On' else 0,
-                    'timestamp': task.created_at
+                    'timestamp': result.completed_at
                 })
 
     return metrics
