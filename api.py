@@ -13,6 +13,29 @@ KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon', 'test']
 
 logger = logging.getLogger()
 
+
+def parse_led_result(metrics, result, task):
+    if 'led' not in metrics[result.device_id]:
+        metrics[result.device_id]['led'] = []
+    metrics[result.device_id]['led'].append({
+        'value': 1 if task.name == 'Led On' else 0,
+        'timestamp': result.completed_at
+    })
+
+
+def parse_sense_result(metrics, result, task):
+    metric = task.task_params['sense_metric']
+    sense_mode = task.task_params['sense_mode']
+    if metric not in metrics[result.device_id]:
+        metrics[result.device_id][metric] = {}
+    if sense_mode not in metrics[result.device_id][metric]:
+        metrics[result.device_id][metric][sense_mode] = []
+    metrics[result.device_id][metric][sense_mode].append({
+        'value': result.value,
+        'timestamp': result.completed_at,
+    })
+
+
 def build_measurements():
     with Session(bind=engine) as session:
         results = session\
@@ -22,25 +45,13 @@ def build_measurements():
 
         metrics = {}
 
-
-        for result, task in results:
-            if result.device_id not in metrics:
-                metrics[result.device_id] = {}
-            if task.name == 'Sense':
-                metric = task.task_params['sense_metric']
-                if metric not in metrics[result.device_id]:
-                    metrics[result.device_id][metric] = []
-                metrics[result.device_id][metric].append({
-                    'value': result.value,
-                    'timestamp': result.completed_at,
-                })
-            if task.name == 'Led On' or task.name == 'Led Off':
-                if 'led' not in metrics[result.device_id]:
-                    metrics[result.device_id]['led'] = []
-                metrics[result.device_id]['led'].append({
-                    'value': 1 if task.name == 'Led On' else 0,
-                    'timestamp': result.completed_at
-                })
+        for task_result, original_task in results:
+            if task_result.device_id not in metrics:
+                metrics[task_result.device_id] = {}
+            if original_task.name == 'Sense':
+                parse_sense_result(metrics, task_result, original_task)
+            if original_task.name == 'Led On' or original_task.name == 'Led Off':
+                parse_led_result(metrics, task_result, original_task)
 
     return metrics
 
