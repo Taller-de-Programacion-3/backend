@@ -110,14 +110,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{backend_url}}/devices/tasks/riscv",
+					"raw": "{{backend_url}}/devices/tasks/esp32",
 					"host": [
 						"{{backend_url}}"
 					],
 					"path": [
 						"devices",
 						"tasks",
-						"riscv"
+						"esp32"
 					]
 				}
 			},
@@ -130,7 +130,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "[\n    {\n        \"id\": 5,\n        \"value\": \"87\"\n    }\n]",
+					"raw": "[\n    {\n        \"id\": 11,\n        \"value\": 16\n    }\n]",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -138,14 +138,32 @@
 					}
 				},
 				"url": {
-					"raw": "{{backend_url}}/devices/tasks/riscv",
+					"raw": "{{backend_url}}/devices/tasks/argon",
 					"host": [
 						"{{backend_url}}"
 					],
 					"path": [
 						"devices",
 						"tasks",
-						"riscv"
+						"argon"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get metric results",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{backend_url}}/api/measurements",
+					"host": [
+						"{{backend_url}}"
+					],
+					"path": [
+						"api",
+						"measurements"
 					]
 				}
 			},
