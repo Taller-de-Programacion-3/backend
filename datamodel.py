@@ -69,5 +69,6 @@ class TaskResultModel(Base):
     task = sa.orm.relationship('TaskModel', back_populates='results')
     value = sa.Column(sa.String)
     device_id = sa.Column(sa.String, nullable=False)
+    completed_at = sa.Column(sa.DateTime, nullable=True)
 
     status = sa.Column(sa.Enum(ResultStatus), server_default='pending')
