@@ -5,7 +5,7 @@ import datetime
 from json import JSONDecodeError
 
 from flask import Blueprint, make_response, jsonify, request
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from datamodel import ExecutionType, TaskStatus, engine, TaskModel, TaskResultModel
 
@@ -14,12 +14,32 @@ KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon', 'test']
 logger = logging.getLogger()
 
 def build_measurements():
-    # Aca podriamos recibir filtros para obtener mediciones
-    # pero por lo pronto devolvemos todos los resultados para
-    # cada uno de los dispositivos.
+    with Session(bind=engine) as session:
+        results = session\
+            .query(TaskResultModel, TaskModel)\
+            .filter(TaskResultModel.status == 'done', TaskModel.id == TaskResultModel.task_id)\
+            .all()
 
-    # TODO
-    return {}
+        metrics = {}
+
+        for result, task in results:
+            if task.name == 'Sense':
+                metric = task.task_params['sense_metric']
+                if metric not in metrics:
+                    metrics[metric] = []
+                metrics[metric].append({
+                    'value': result.value,
+                    'timestamp': task.created_at,
+                })
+            if task.name == 'Led On' or task.name == 'Led Off':
+                if 'led' not in metrics:
+                    metrics['led'] = []
+                metrics['led'].append({
+                    'value': 1 if task.name == 'Led On' else 0,
+                    'timestamp': task.created_at
+                })
+
+    return metrics
 
 
 def handle_create_task(body):
