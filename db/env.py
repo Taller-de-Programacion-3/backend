@@ -1,6 +1,7 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from logging.config import fileConfig
 
@@ -20,6 +21,7 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 from datamodel import Base
+
 target_metadata = Base.metadata
 # target_metadata = None
 
@@ -28,9 +30,10 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-db_url = os.environ.get('DB_URL')
+db_url = os.environ.get("DB_URL")
 
-config.set_section_option('alembic', 'sqlalchemy.url', db_url)
+config.set_section_option("alembic", "sqlalchemy.url", db_url)
+
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
@@ -70,9 +73,7 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
