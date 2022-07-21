@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import random
@@ -57,6 +58,7 @@ def store_task_results(device_id, results):
         for q_res in query_result:
             q_res.status = ResultStatus.done
             q_res.value = map_results.get(q_res.id)
+            q_res.completed_at = datetime.datetime.now()
    
             # Generamos un nuevo resultado pendiente si la tarea asociada es periodica y está activa.
             if q_res.task.execution_type == ExecutionType.periodic and q_res.task.status == TaskStatus.active:
