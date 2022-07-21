@@ -16,8 +16,10 @@ logger = logging.getLogger()
 
 def parse_led_result(metrics, result, task):
     if 'led' not in metrics[result.device_id]:
-        metrics[result.device_id]['led'] = []
-    metrics[result.device_id]['led'].append({
+        metrics[result.device_id]['led'] = {}
+    if 'on' not in metrics[result.device_id]['led']:
+        metrics[result.device_id]['led']['on'] = []
+    metrics[result.device_id]['led']['on'].append({
         'value': 1 if task.name == 'Led On' else 0,
         'timestamp': result.completed_at
     })
