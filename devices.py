@@ -9,22 +9,33 @@ from sqlalchemy.orm import Session
 
 from flask import Blueprint, jsonify, request, make_response
 
-from datamodel import ExecutionType, TaskModel, TaskStatus, engine, TaskResultModel, ResultStatus
+from datamodel import (
+    ExecutionType,
+    TaskModel,
+    TaskStatus,
+    engine,
+    TaskResultModel,
+    ResultStatus,
+)
 
-devices_blueprint = Blueprint('devices', __name__)
+devices_blueprint = Blueprint("devices", __name__)
 
 logger = logging.getLogger()
+
 
 def get_device_tasks(device_id):
 
     # Busca las tareas que tiene que ejecutar cierto dispositivo.
 
-
     serialized_results = []
     with Session(engine) as session:
-        query = sa.select(TaskResultModel).join(TaskResultModel.task).where(
-            TaskResultModel.device_id == device_id,
-            TaskResultModel.status == ResultStatus.pending
+        query = (
+            sa.select(TaskResultModel)
+            .join(TaskResultModel.task)
+            .where(
+                TaskResultModel.device_id == device_id,
+                TaskResultModel.status == ResultStatus.pending,
+            )
         )
         results = session.execute(query)
         results = results.scalars().all()
@@ -36,19 +47,24 @@ def get_device_tasks(device_id):
 
     return serialized_results
 
+
 def store_task_results(device_id, results):
     # Guarda los resultados de las tareas
 
-    logger.info(f'Storing {results}')
+    logger.info(f"Storing {results}")
 
-    map_results = {res['id'] : res['value'] for res in results}
+    map_results = {res["id"]: res["value"] for res in results}
 
-    query_result = [] 
+    query_result = []
     with Session(engine) as session:
-        query = sa.select(TaskResultModel).join(TaskResultModel.task).where(
-            TaskResultModel.device_id == device_id,
-            TaskResultModel.status == ResultStatus.pending,
-            TaskResultModel.id.in_(map_results.keys())
+        query = (
+            sa.select(TaskResultModel)
+            .join(TaskResultModel.task)
+            .where(
+                TaskResultModel.device_id == device_id,
+                TaskResultModel.status == ResultStatus.pending,
+                TaskResultModel.id.in_(map_results.keys()),
+            )
         )
         query_result = session.execute(query)
         query_result = query_result.scalars().all()
@@ -59,20 +75,27 @@ def store_task_results(device_id, results):
             q_res.status = ResultStatus.done
             q_res.value = map_results.get(q_res.id)
             q_res.completed_at = datetime.datetime.now()
-   
+
             # Generamos un nuevo resultado pendiente si la tarea asociada es periodica y está activa.
-            if q_res.task.execution_type == ExecutionType.periodic and q_res.task.status == TaskStatus.active:
-                logger.info(f'Creating new pending result for periodic task {q_res.task.id}')
-                next_results.append(TaskResultModel(task_id=q_res.task.id, device_id=device_id))
-        
+            if (
+                q_res.task.execution_type == ExecutionType.periodic
+                and q_res.task.status == TaskStatus.active
+            ):
+                logger.info(
+                    f"Creating new pending result for periodic task {q_res.task.id}"
+                )
+                next_results.append(
+                    TaskResultModel(task_id=q_res.task.id, device_id=device_id)
+                )
+
         session.add_all(next_results)
         session.commit()
 
 
-@devices_blueprint.route('/tasks/<device_id>', methods=['GET', 'POST'])
+@devices_blueprint.route("/tasks/<device_id>", methods=["GET", "POST"])
 def tasks_endpoint(device_id):
-    if request.method == 'POST':
-        logger.info(f'Adding new entry for device id: {device_id}')
+    if request.method == "POST":
+        logger.info(f"Adding new entry for device id: {device_id}")
 
         # Aca asumimos que nos llega algo como
         # [{ 'id': <result_id>, 'value': <valor medido> }, ...]
@@ -82,7 +105,7 @@ def tasks_endpoint(device_id):
         # Es un resultado de alguna tarea
         store_task_results(device_id, tasks_results)
 
-        return make_response(jsonify('ok'), 200)
+        return make_response(jsonify("ok"), 200)
     else:
 
         _tasks = get_device_tasks(device_id)
