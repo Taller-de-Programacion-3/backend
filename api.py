@@ -38,12 +38,21 @@ def parse_sense_result(metrics, result, task):
     })
 
 
-def build_measurements():
+def build_measurements(args):
+    last_minutes = None
+    if 'last' in args:
+        last_minutes = int(args.get('last'))
+
     with Session(bind=engine) as session:
         results = session\
             .query(TaskResultModel, TaskModel)\
-            .filter(TaskResultModel.status == 'done', TaskModel.id == TaskResultModel.task_id)\
-            .all()
+            .filter(TaskResultModel.status == 'done', TaskModel.id == TaskResultModel.task_id)
+
+        if last_minutes is not None:
+            results = results.filter(TaskResultModel.completed_at > (datetime.datetime.now() - datetime.timedelta(
+                minutes=last_minutes)))\
+
+        results = results.all()
 
         metrics = {}
 
@@ -164,7 +173,7 @@ api_blueprint = Blueprint('api', __name__)
 
 @api_blueprint.route('/measurements', methods=['GET'])
 def get_measures():
-    measurements = build_measurements()
+    measurements = build_measurements(request.args)
     return make_response(jsonify(measurements), 200)
 
 
