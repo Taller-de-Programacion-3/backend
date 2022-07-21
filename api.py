@@ -7,7 +7,7 @@ from json import JSONDecodeError
 from flask import Blueprint, make_response, jsonify, request
 from sqlalchemy.orm import Session
 
-from datamodel import ExecutionType, TaskStatus, engine, TaskModel, TaskResultModel
+from datamodel import ExecutionType, TaskStatus, engine, TaskModel, TaskResultModel, ResultStatus
 
 KNOWN_DEVICES_ID = ['esp32', 'riscv', 'argon', 'test']
 
@@ -83,7 +83,7 @@ def handle_modify_task(body):
 # DTOs para las clases
 
 def normalize_task_result(r: TaskResultModel):
-    return { 'id': r.id, 'value': r.value, 'device_id': r.device_id }
+    return { 'id': r.id, 'value': r.value, 'device_id': r.device_id, 'status': r.status }
 
 def normalize_task(task: TaskModel):
     return {
@@ -109,16 +109,17 @@ def handle_get_active_tasks():
 
         for t in tasks:
             for r in t['results']:
-                response.append(
-                    {
-                        'task_name': t['name'],
-                        'task_created_at': t['created_at'],
-                        'device_id': r['device_id'],
-                        'status': t['status'],
-                        'execution_type': t['execution_type'],
-                        'params': t['params'],
-                    }
-                )
+                if r['status'] == ResultStatus.pending:
+                    response.append(
+                        {
+                            'task_name': t['name'],
+                            'task_created_at': t['created_at'],
+                            'device_id': r['device_id'],
+                            'status': t['status'],
+                            'execution_type': t['execution_type'],
+                            'params': t['params'],
+                        }
+                    )
 
 
         return make_response(jsonify(response))
