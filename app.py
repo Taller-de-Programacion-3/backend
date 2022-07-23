@@ -29,7 +29,7 @@ load_dotenv()
 
 @app.route("/")
 def hello():
-    return "Hello world"
+    return "Welcome to the Taller 3 API!"
 
 
 if __name__ == "__main__":

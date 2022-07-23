@@ -24,10 +24,10 @@ logger = logging.getLogger()
 
 
 def get_device_tasks(device_id):
-
-    # Busca las tareas que tiene que ejecutar cierto dispositivo.
+    """Busca las tareas que tiene que ejecutar cierto dispositivo."""
 
     serialized_results = []
+
     with Session(engine) as session:
         query = (
             sa.select(TaskResultModel)
@@ -40,20 +40,16 @@ def get_device_tasks(device_id):
         results = session.execute(query)
         results = results.scalars().all()
         serialized_results = [tasks.serialize_task(res) for res in results]
-    # tasks = [
-    #     tasks.READ_INPUT,
-    #     tasks.LED_ON_TASK if random.getrandbits(1) else tasks.LED_OFF_TASK
-    # ]
 
     return serialized_results
 
 
 def store_task_results(device_id, results):
-    # Guarda los resultados de las tareas
+    """Guarda los resultados de las tareas"""
 
     logger.info(f"Storing {results}")
 
-    map_results = {res["id"]: res["value"] for res in results}
+    map_results = { res["id"]: res["value"] for res in results }
 
     query_result = []
     with Session(engine) as session:
@@ -66,10 +62,10 @@ def store_task_results(device_id, results):
                 TaskResultModel.id.in_(map_results.keys()),
             )
         )
-        query_result = session.execute(query)
-        query_result = query_result.scalars().all()
+        query_result = session.execute(query).scalars().all()
 
         next_results = []
+
         # Actualizamos los resultados.
         for q_res in query_result:
             q_res.status = ResultStatus.done
@@ -82,7 +78,7 @@ def store_task_results(device_id, results):
                 and q_res.task.status == TaskStatus.active
             ):
                 logger.info(
-                    f"Creating new pending result for periodic task {q_res.task.id}"
+                    f"Creando nuevo resultado con estado pendiente para la tarea {q_res.task.id} (periodica)"
                 )
                 next_results.append(
                     TaskResultModel(task_id=q_res.task.id, device_id=device_id)
@@ -99,7 +95,6 @@ def tasks_endpoint(device_id):
 
         # Aca asumimos que nos llega algo como
         # [{ 'id': <result_id>, 'value': <valor medido> }, ...]
-
         tasks_results = json.loads(request.data)
 
         # Es un resultado de alguna tarea
@@ -107,7 +102,6 @@ def tasks_endpoint(device_id):
 
         return make_response(jsonify("ok"), 200)
     else:
-
         _tasks = get_device_tasks(device_id)
 
         return make_response(jsonify(tasks=list(_tasks)), 200)
