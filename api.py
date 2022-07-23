@@ -145,6 +145,7 @@ def normalize_task_result(r: TaskResultModel):
 
 def normalize_task(task: TaskModel):
     return {
+        "id": task.id,
         "name": task.name,
         "execution_type": task.execution_type,
         "results": [normalize_task_result(r) for r in task.results],
@@ -171,6 +172,7 @@ def handle_get_active_tasks():
                 if r["status"] == ResultStatus.pending:
                     response.append(
                         {
+                            "id": t["id"],
                             "task_name": t["name"],
                             "task_created_at": t["created_at"],
                             "device_id": r["device_id"],
