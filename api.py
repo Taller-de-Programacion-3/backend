@@ -169,14 +169,16 @@ def handle_get_active_tasks():
 
         for t in tasks:
             for r in t["results"]:
-                if r["status"] == ResultStatus.pending:
+                is_pending = r["status"] == ResultStatus.pending
+                is_not_supported = r["status"] == ResultStatus.not_supported
+                if is_pending or is_not_supported :
                     response.append(
                         {
                             "id": t["id"],
                             "task_name": t["name"],
                             "task_created_at": t["created_at"],
                             "device_id": r["device_id"],
-                            "status": t["status"],
+                            "status": t["status"] if is_pending else "not_supported",
                             "execution_type": t["execution_type"],
                             "params": t["params"],
                         }

@@ -44,14 +44,24 @@ def get_device_tasks(device_id):
     return serialized_results
 
 
+def parse_results(results):
+    new_results = {}
+    for res in results:
+        if "not_supported" in res:
+            new_results[res["id"]] = "not_supported"
+        else:
+            new_results[res["id"]] = res["value"]
+    return new_results
+
+
+
 def store_task_results(device_id, results):
     """Guarda los resultados de las tareas"""
 
     logger.info(f"Storing {results}")
 
-    map_results = { res["id"]: res["value"] for res in results }
+    map_results = parse_results(results)
 
-    query_result = []
     with Session(engine) as session:
         query = (
             sa.select(TaskResultModel)
@@ -68,21 +78,27 @@ def store_task_results(device_id, results):
 
         # Actualizamos los resultados.
         for q_res in query_result:
-            q_res.status = ResultStatus.done
-            q_res.value = map_results.get(q_res.id)
+            value = map_results.get(q_res.id)
             q_res.completed_at = datetime.datetime.now()
 
-            # Generamos un nuevo resultado pendiente si la tarea asociada es periodica y está activa.
-            if (
-                q_res.task.execution_type == ExecutionType.periodic
-                and q_res.task.status == TaskStatus.active
-            ):
-                logger.info(
-                    f"Creando nuevo resultado con estado pendiente para la tarea {q_res.task.id} (periodica)"
-                )
-                next_results.append(
-                    TaskResultModel(task_id=q_res.task.id, device_id=device_id)
-                )
+            if value == "not_supported":
+                # Si la respuesta del dispositivo fue "not supported" entonces le ponemos ese estado
+                # al resultado y terminamos, no se crea un nuevo resultado pendiente si era periodica.
+                q_res.status = ResultStatus.not_supported
+            else:
+                q_res.status = ResultStatus.done
+                q_res.value = value
+                # Generamos un nuevo resultado pendiente si la tarea asociada es periodica y está activa.
+                if (
+                    q_res.task.execution_type == ExecutionType.periodic
+                    and q_res.task.status == TaskStatus.active
+                ):
+                    logger.info(
+                        f"Creando nuevo resultado con estado pendiente para la tarea {q_res.task.id} (periodica)"
+                    )
+                    next_results.append(
+                        TaskResultModel(task_id=q_res.task.id, device_id=device_id)
+                    )
 
         session.add_all(next_results)
         session.commit()
