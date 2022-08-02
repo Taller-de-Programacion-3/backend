@@ -33,12 +33,12 @@ def parse_led_result(metrics, result, task):
 
 def parse_sense_result(metrics, result, task):
     metric = task.task_params["sense_metric"]
-    sense_mode = task.task_params["sense_mode"]
+    task_id = 'Task ID: {}'.format(task.id)
     if metric not in metrics[result.device_id]:
         metrics[result.device_id][metric] = {}
-    if sense_mode not in metrics[result.device_id][metric]:
-        metrics[result.device_id][metric][sense_mode] = []
-    metrics[result.device_id][metric][sense_mode].append(
+    if task_id not in metrics[result.device_id][metric]:
+        metrics[result.device_id][metric][task_id] = []
+    metrics[result.device_id][metric][task_id].append(
         {
             "value": result.value,
             "timestamp": result.completed_at,
