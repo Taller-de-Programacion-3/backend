@@ -15,7 +15,8 @@ Base = declarative_base()
 
 class ResultStatus(str, enum.Enum):
     pending = "pending"
-    done = "done"
+    done = "done",
+    not_supported = "not_supported",
 
 
 class ExecutionType(str, enum.Enum):
