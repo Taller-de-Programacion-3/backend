@@ -13,7 +13,7 @@ from datamodel import (
     engine,
     TaskModel,
     TaskResultModel,
-    ResultStatus,
+    ResultStatus, DeviceModel,
 )
 
 KNOWN_DEVICES_ID = ["esp32", "riscv", "argon", "test"]
@@ -80,8 +80,12 @@ def handle_create_task(body):
     # Lista de dispositivos en los que se carga la tarea.
     devices_ids = body.get("device_ids")
 
+    with Session(engine) as session:
+        devices = session.query(DeviceModel)
+        known_devices = list(x.name for x in devices)
+
     for id in devices_ids:
-        if id not in KNOWN_DEVICES_ID:
+        if id not in known_devices:
             return "Invalid device id", 400
 
     if len(devices_ids) < 1:

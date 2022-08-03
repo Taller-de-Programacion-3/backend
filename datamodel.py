@@ -78,3 +78,10 @@ class TaskResultModel(Base):
     completed_at = sa.Column(sa.DateTime, nullable=True)
 
     status = sa.Column(sa.Enum(ResultStatus), server_default="pending")
+
+
+class DeviceModel(Base):
+    __tablename__ = "devices"
+
+    id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
+    name = sa.Column(sa.String, nullable=False, primary_key=True)

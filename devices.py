@@ -2,6 +2,9 @@ import datetime
 import json
 import logging
 import random
+
+from sqlalchemy.exc import IntegrityError
+
 import tasks
 import sqlalchemy as sa
 
@@ -15,7 +18,7 @@ from datamodel import (
     TaskStatus,
     engine,
     TaskResultModel,
-    ResultStatus,
+    ResultStatus, DeviceModel,
 )
 
 devices_blueprint = Blueprint("devices", __name__)
@@ -121,3 +124,31 @@ def tasks_endpoint(device_id):
         _tasks = get_device_tasks(device_id)
 
         return make_response(jsonify(tasks=list(_tasks)), 200)
+
+
+@devices_blueprint.route("/<device_id>", methods=["POST", "DELETE"])
+def devices_endpoint(device_id):
+    if request.method == "POST":
+        try:
+            device = DeviceModel(name=device_id)
+            with Session(engine) as session:
+                session.add_all([device])
+                session.commit()
+                return "ok", 200
+        except IntegrityError:
+            return "Device already exists", 400
+    if request.method == 'DELETE':
+        with Session(engine) as session:
+            session.query(DeviceModel).filter(DeviceModel.name == device_id).delete()
+            session.commit()
+        return make_response("Deleted OK", 200)
+
+
+@devices_blueprint.route("/", methods=["GET"])
+def devices_get_all_endpoint():
+    if request.method == 'GET':
+        with Session(engine) as session:
+            devices = session.query(DeviceModel)
+            return {
+                'devices': list({"id": x.name} for x in devices)
+            }, 200
