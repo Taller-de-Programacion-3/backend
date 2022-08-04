@@ -5,6 +5,7 @@ import datetime
 from json import JSONDecodeError
 
 from flask import Blueprint, make_response, jsonify, request
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from datamodel import (
@@ -219,3 +220,31 @@ def task():
 
     except RuntimeError:
         return make_response("Invalid params", 400)
+
+
+@api_blueprint.route("/devices/<device_id>", methods=["POST", "DELETE"])
+def devices_endpoint(device_id):
+    if request.method == "POST":
+        try:
+            device = DeviceModel(name=device_id)
+            with Session(engine) as session:
+                session.add_all([device])
+                session.commit()
+                return "ok", 200
+        except IntegrityError:
+            return "Device already exists", 400
+    if request.method == 'DELETE':
+        with Session(engine) as session:
+            session.query(DeviceModel).filter(DeviceModel.name == device_id).delete()
+            session.commit()
+        return make_response("Deleted OK", 200)
+
+
+@api_blueprint.route("/devices", methods=["GET"])
+def devices_get_all_endpoint():
+    if request.method == 'GET':
+        with Session(engine) as session:
+            devices = session.query(DeviceModel)
+            return {
+                'devices': list({"id": x.name} for x in devices)
+            }, 200
