@@ -85,3 +85,4 @@ class DeviceModel(Base):
 
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
     name = sa.Column(sa.String, nullable=False, primary_key=True)
+    friendly_name = sa.Column(sa.String, nullable=True)

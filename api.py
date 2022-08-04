@@ -224,9 +224,11 @@ def task():
 
 @api_blueprint.route("/devices/<device_id>", methods=["POST", "DELETE"])
 def devices_endpoint(device_id):
+    body = json.loads(request.data) if request.data else {}
     if request.method == "POST":
+        name = body.get('name')
         try:
-            device = DeviceModel(name=device_id)
+            device = DeviceModel(name=device_id, friendly_name=name)
             with Session(engine) as session:
                 session.add_all([device])
                 session.commit()
@@ -246,5 +248,5 @@ def devices_get_all_endpoint():
         with Session(engine) as session:
             devices = session.query(DeviceModel)
             return {
-                'devices': list({"id": x.name} for x in devices)
+                'devices': list({"id": x.name, "name": x.friendly_name} for x in devices)
             }, 200
