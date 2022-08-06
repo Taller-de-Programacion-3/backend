@@ -272,13 +272,16 @@ def devices_endpoint(device_key):
         return make_response("Deleted OK", 200)
 
 
+def build_device_data(device_model):
+    return {
+        "id": device_model.key,
+        "name": device_model.name,
+        "is_active": device_model.status == DeviceStatus.active
+    }
+
+
 @api_blueprint.route("/devices", methods=["GET"])
-def devices_get_all_endpoint():
-    if request.method == "GET":
-        with Session(engine) as session:
-            devices = session.query(DeviceModel)
-            return {
-                "devices": list(
-                    {"id": x.name, "name": x.friendly_name} for x in devices
-                )
-            }, 200
+def get_devices():
+    with Session(engine) as session:
+        devices = session.query(DeviceModel)
+        return make_response({"devices": [build_device_data(d) for d in devices]}, 200)
