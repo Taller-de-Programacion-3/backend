@@ -18,16 +18,17 @@ class ResultStatus(str, enum.Enum):
     done = "done",
     not_supported = "not_supported",
 
-
 class ExecutionType(str, enum.Enum):
     once = "once"
     periodic = "periodic"
-
 
 class TaskStatus(str, enum.Enum):
     active = "active"
     inactive = "inactive"
 
+class DeviceStatus(str, enum.Enum):
+    active = "active"
+    inactive = "inactive"
 
 class SenseMode(str, enum.Enum):
     single = "single"
@@ -37,7 +38,6 @@ class SenseMode(str, enum.Enum):
 
 
 # Representa una tarea + configuracion para realizarse
-
 
 class TaskModel(Base):
 
@@ -72,17 +72,25 @@ class TaskResultModel(Base):
 
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
     task_id = sa.Column(sa.Integer, sa.ForeignKey("tasks.id", ondelete="CASCADE"))
-    task = sa.orm.relationship("TaskModel", back_populates="results")
     value = sa.Column(sa.String)
-    device_id = sa.Column(sa.String, nullable=False)
     completed_at = sa.Column(sa.DateTime, nullable=True)
-
     status = sa.Column(sa.Enum(ResultStatus), server_default="pending")
 
+    # TODO: Esto habria que ponerlo como foreign key
+    device_key = sa.Column(sa.String, nullable=False)
+
+    task = sa.orm.relationship("TaskModel", back_populates="results")
 
 class DeviceModel(Base):
+
     __tablename__ = "devices"
 
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
-    name = sa.Column(sa.String, nullable=False, primary_key=True)
-    friendly_name = sa.Column(sa.String, nullable=True)
+
+    # Nombre "key" del dispositivo (id).
+    key = sa.Column(sa.String, nullable=False, primary_key=True)
+
+    # Nombre para mostrar.
+    name = sa.Column(sa.String)
+
+    status = sa.Column(sa.Enum(DeviceStatus), server_default="active")

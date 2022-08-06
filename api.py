@@ -1,6 +1,7 @@
 import json
 import logging
 import datetime
+import sqlalchemy as sa
 
 from json import JSONDecodeError
 
@@ -14,7 +15,9 @@ from datamodel import (
     engine,
     TaskModel,
     TaskResultModel,
-    ResultStatus, DeviceModel,
+    ResultStatus,
+    DeviceModel,
+    DeviceStatus,
 )
 
 KNOWN_DEVICES_ID = ["esp32", "riscv", "argon", "test"]
@@ -34,7 +37,7 @@ def parse_led_result(metrics, result, task):
 
 def parse_sense_result(metrics, result, task):
     metric = task.task_params["sense_metric"]
-    task_id = 'Task ID: {}'.format(task.id)
+    task_id = "Task ID: {}".format(task.id)
     if metric not in metrics[result.device_id]:
         metrics[result.device_id][metric] = {}
     if task_id not in metrics[result.device_id][metric]:
@@ -160,7 +163,7 @@ def normalize_task(task: TaskModel):
     }
 
 
-# { device_id: <device_id>, task_name: <task_name>, perio}
+# { device_id: <device_id>, task_name: <task_name>, perio... }
 def handle_get_active_tasks():
 
     f = TaskModel.status == TaskStatus.active
@@ -176,7 +179,7 @@ def handle_get_active_tasks():
             for r in t["results"]:
                 is_pending = r["status"] == ResultStatus.pending
                 is_not_supported = r["status"] == ResultStatus.not_supported
-                if is_pending or is_not_supported :
+                if is_pending or is_not_supported:
                     response.append(
                         {
                             "id": t["id"],
@@ -222,31 +225,60 @@ def task():
         return make_response("Invalid params", 400)
 
 
-@api_blueprint.route("/devices/<device_id>", methods=["POST", "DELETE"])
-def devices_endpoint(device_id):
+@api_blueprint.route("/devices/<device_key>", methods=["POST", "DELETE"])
+def devices_endpoint(device_key):
+
     body = json.loads(request.data) if request.data else {}
+
     if request.method == "POST":
-        name = body.get('name')
-        try:
-            device = DeviceModel(name=device_id, friendly_name=name)
-            with Session(engine) as session:
-                session.add_all([device])
-                session.commit()
-                return "ok", 200
-        except IntegrityError:
-            return "Device already exists", 400
-    if request.method == 'DELETE':
+
+        logger.info(f"Setting device with key {device_key} as active")
+
+        name = body.get("name")
+
         with Session(engine) as session:
-            session.query(DeviceModel).filter(DeviceModel.name == device_id).delete()
+
+            target_device = (
+                sa.select(DeviceModel)
+                .where(DeviceModel.key == device_key)
+            )
+
+            results = session.execute(target_device).scalars().all()
+
+            if results:
+                (session.query(DeviceModel)
+                    .filter(DeviceModel.key == device_key)
+                    .update({ 'status': DeviceStatus.active }))
+            else:
+                session.add(DeviceModel(key=device_key, name=name))
+
+            session.commit()
+            return make_response("ok", 200)
+
+    if request.method == "DELETE":
+
+        # NUNCA eliminamos dispositivos de la base de datos
+        # siempre los desactivamos.
+
+        logger.info(f"Setting device with key {device_key} as inactive")
+
+        with Session(engine) as session:
+
+            (session.query(DeviceModel)
+                .filter(DeviceModel.key == device_key)
+                .update({ 'status': DeviceStatus.inactive }))
+
             session.commit()
         return make_response("Deleted OK", 200)
 
 
 @api_blueprint.route("/devices", methods=["GET"])
 def devices_get_all_endpoint():
-    if request.method == 'GET':
+    if request.method == "GET":
         with Session(engine) as session:
             devices = session.query(DeviceModel)
             return {
-                'devices': list({"id": x.name, "name": x.friendly_name} for x in devices)
+                "devices": list(
+                    {"id": x.name, "name": x.friendly_name} for x in devices
+                )
             }, 200

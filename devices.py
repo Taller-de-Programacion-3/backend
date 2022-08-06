@@ -46,13 +46,10 @@ def get_device_tasks(device_id):
 
 def parse_results(results):
     new_results = {}
-    for res in results:
-        if "not_supported" in res:
-            new_results[res["id"]] = "not_supported"
-        else:
-            new_results[res["id"]] = res["value"]
-    return new_results
 
+    for res in results:
+        new_results[res["id"]] = "not_supported" if "not_supported" in res else res["value"]
+    return new_results
 
 
 def store_task_results(device_id, results):
@@ -82,6 +79,7 @@ def store_task_results(device_id, results):
             q_res.completed_at = datetime.datetime.now()
 
             if value == "not_supported":
+
                 # Si la respuesta del dispositivo fue "not supported" entonces le ponemos ese estado
                 # al resultado y terminamos, no se crea un nuevo resultado pendiente si era periodica.
                 q_res.status = ResultStatus.not_supported
