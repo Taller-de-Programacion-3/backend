@@ -71,15 +71,16 @@ class TaskResultModel(Base):
     __tablename__ = "task_results"
 
     id = sa.Column(sa.Integer, autoincrement=True, primary_key=True)
-    task_id = sa.Column(sa.Integer, sa.ForeignKey("tasks.id", ondelete="CASCADE"))
     value = sa.Column(sa.String)
     completed_at = sa.Column(sa.DateTime, nullable=True)
     status = sa.Column(sa.Enum(ResultStatus), server_default="pending")
 
-    # TODO: Esto habria que ponerlo como foreign key
-    device_key = sa.Column(sa.String, nullable=False)
+    # Foreign keys
+    task_id = sa.Column(sa.Integer, sa.ForeignKey("tasks.id", ondelete="CASCADE"))
+    device_id = sa.Column(sa.Integer, sa.ForeignKey("devices.id"))
 
     task = sa.orm.relationship("TaskModel", back_populates="results")
+    device = sa.orm.relationship("DeviceModel", back_populates="results")
 
 class DeviceModel(Base):
 
@@ -94,3 +95,7 @@ class DeviceModel(Base):
     name = sa.Column(sa.String)
 
     status = sa.Column(sa.Enum(DeviceStatus), server_default="active")
+
+    results = sa.orm.relationship(
+        "TaskResultModel", cascade="all, delete", back_populates="device"
+    )
