@@ -25,8 +25,8 @@ KNOWN_DEVICES_ID = ["esp32", "riscv", "argon", "test"]
 logger = logging.getLogger()
 
 
-def parse_led_result(metrics, task_result, task):
-    result = metrics[task_result.device_id]
+def parse_led_result(metrics, task_result, task, device):
+    result = metrics[device.name]
 
     if "led" not in result:
         result["led"] = {}
@@ -41,11 +41,11 @@ def parse_led_result(metrics, task_result, task):
     )
 
 
-def parse_sense_result(metrics, task_result, task):
+def parse_sense_result(metrics, task_result, task, device):
     metric = task.task_params["sense_metric"]
     task_id = "Task ID: {}".format(task.id)
 
-    result = metrics[task_result.device_id]
+    result = metrics[device.name]
 
     if metric not in result:
         result[metric] = {}
@@ -83,12 +83,12 @@ def build_measurements(args):
         metrics = {}
 
         for task_result, original_task, device in results:
-            if task_result.device_id not in metrics:
-                metrics[task_result.device_id] = {}
+            if device.name not in metrics:
+                metrics[device.name] = {}
             if original_task.name == "Sense":
-                parse_sense_result(metrics, task_result, original_task)
+                parse_sense_result(metrics, task_result, original_task, device)
             if original_task.name == "Led On" or original_task.name == "Led Off":
-                parse_led_result(metrics, task_result, original_task)
+                parse_led_result(metrics, task_result, original_task, device)
 
     return metrics
 
