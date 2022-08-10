@@ -107,7 +107,7 @@ def store_task_results(key, results):
                         f"Creando nuevo resultado con estado pendiente para la tarea {q_res.task.id} (periodica)"
                     )
                     next_results.append(
-                        TaskResultModel(task_id=q_res.task.id, device_id=key)
+                        TaskResultModel(task_id=q_res.task.id, device_id=target_device.id)
                     )
 
         session.add_all(next_results)
