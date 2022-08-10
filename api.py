@@ -66,8 +66,10 @@ def build_measurements(args):
         last_minutes = int(args.get("last"))
 
     with Session(bind=engine) as session:
-        results = session.query(TaskResultModel, TaskModel).filter(
-            TaskResultModel.status == "done", TaskModel.id == TaskResultModel.task_id
+        results = session.query(TaskResultModel, TaskModel, DeviceModel).filter(
+            TaskResultModel.status == "done",
+            TaskModel.id == TaskResultModel.task_id,
+            DeviceModel.status == DeviceStatus.active
         )
 
         if last_minutes is not None:
@@ -79,7 +81,7 @@ def build_measurements(args):
 
         metrics = {}
 
-        for task_result, original_task in results:
+        for task_result, original_task, device in results:
             if task_result.device_id not in metrics:
                 metrics[task_result.device_id] = {}
             if original_task.name == "Sense":
