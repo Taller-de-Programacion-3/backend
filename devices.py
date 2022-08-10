@@ -54,7 +54,7 @@ def parse_results(results):
     return new_results
 
 
-def store_task_results(device_id, results):
+def store_task_results(key, results):
     """Guarda los resultados de las tareas"""
 
     logger.info(f"Storing {results}")
