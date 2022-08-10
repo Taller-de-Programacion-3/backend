@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import random
+
 import tasks
 import sqlalchemy as sa
 
@@ -11,11 +12,12 @@ from flask import Blueprint, jsonify, request, make_response
 
 from datamodel import (
     ExecutionType,
-    TaskModel,
     TaskStatus,
     engine,
     TaskResultModel,
     ResultStatus,
+    DeviceModel,
+    DeviceStatus
 )
 
 devices_blueprint = Blueprint("devices", __name__)
@@ -23,7 +25,7 @@ devices_blueprint = Blueprint("devices", __name__)
 logger = logging.getLogger()
 
 
-def get_device_tasks(device_id):
+def get_device_tasks(device_key):
     """Busca las tareas que tiene que ejecutar cierto dispositivo."""
 
     serialized_results = []
@@ -31,9 +33,9 @@ def get_device_tasks(device_id):
     with Session(engine) as session:
         query = (
             sa.select(TaskResultModel)
-            .join(TaskResultModel.task)
+            .join(DeviceModel)
             .where(
-                TaskResultModel.device_id == device_id,
+                DeviceModel.key == device_key,
                 TaskResultModel.status == ResultStatus.pending,
             )
         )
@@ -46,16 +48,13 @@ def get_device_tasks(device_id):
 
 def parse_results(results):
     new_results = {}
+
     for res in results:
-        if "not_supported" in res:
-            new_results[res["id"]] = "not_supported"
-        else:
-            new_results[res["id"]] = res["value"]
+        new_results[res["id"]] = "not_supported" if "not_supported" in res else res["value"]
     return new_results
 
 
-
-def store_task_results(device_id, results):
+def store_task_results(key, results):
     """Guarda los resultados de las tareas"""
 
     logger.info(f"Storing {results}")
@@ -63,11 +62,17 @@ def store_task_results(device_id, results):
     map_results = parse_results(results)
 
     with Session(engine) as session:
+
+        target_device = [x for x in session.query(DeviceModel).filter(DeviceModel.key == key)]
+
+        # Buscamos que exista el dispositivo.
+        target_device = target_device[0]
+
         query = (
             sa.select(TaskResultModel)
             .join(TaskResultModel.task)
             .where(
-                TaskResultModel.device_id == device_id,
+                TaskResultModel.device_id == target_device.id,
                 TaskResultModel.status == ResultStatus.pending,
                 TaskResultModel.id.in_(map_results.keys()),
             )
@@ -82,16 +87,21 @@ def store_task_results(device_id, results):
             q_res.completed_at = datetime.datetime.now()
 
             if value == "not_supported":
-                # Si la respuesta del dispositivo fue "not supported" entonces le ponemos ese estado
-                # al resultado y terminamos, no se crea un nuevo resultado pendiente si era periodica.
+
+                # Si la respuesta del dispositivo fue "not supported" entonces le ponemos ese
+                # estado al resultado y terminamos, no se crea un nuevo resultado pendiente si
+                # era periodica.
                 q_res.status = ResultStatus.not_supported
             else:
                 q_res.status = ResultStatus.done
                 q_res.value = value
-                # Generamos un nuevo resultado pendiente si la tarea asociada es periodica y está activa.
+
+                # Generamos un nuevo resultado pendiente si la tarea asociada es
+                # periodica, está activa y el dispositivo esta activo.
                 if (
                     q_res.task.execution_type == ExecutionType.periodic
                     and q_res.task.status == TaskStatus.active
+                    and target_device.status == DeviceStatus.active
                 ):
                     logger.info(
                         f"Creando nuevo resultado con estado pendiente para la tarea {q_res.task.id} (periodica)"

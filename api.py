@@ -1,10 +1,12 @@
 import json
 import logging
 import datetime
+import sqlalchemy as sa
 
 from json import JSONDecodeError
 
 from flask import Blueprint, make_response, jsonify, request
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from datamodel import (
@@ -14,6 +16,8 @@ from datamodel import (
     TaskModel,
     TaskResultModel,
     ResultStatus,
+    DeviceModel,
+    DeviceStatus,
 )
 
 KNOWN_DEVICES_ID = ["esp32", "riscv", "argon", "test"]
@@ -21,27 +25,37 @@ KNOWN_DEVICES_ID = ["esp32", "riscv", "argon", "test"]
 logger = logging.getLogger()
 
 
-def parse_led_result(metrics, result, task):
-    if "led" not in metrics[result.device_id]:
-        metrics[result.device_id]["led"] = {}
-    if "on" not in metrics[result.device_id]["led"]:
-        metrics[result.device_id]["led"]["on"] = []
-    metrics[result.device_id]["led"]["on"].append(
-        {"value": 1 if task.name == "Led On" else 0, "timestamp": result.completed_at}
+def parse_led_result(metrics, task_result, task):
+    result = metrics[task_result.device_id]
+
+    if "led" not in result:
+        result["led"] = {}
+    if "on" not in result["led"]:
+        result["led"]["on"] = []
+
+    result["led"]["on"].append(
+        {
+            "value": 1 if task.name == "Led On" else 0,
+            "timestamp": task_result.completed_at
+        }
     )
 
 
-def parse_sense_result(metrics, result, task):
+def parse_sense_result(metrics, task_result, task):
     metric = task.task_params["sense_metric"]
-    task_id = 'Task ID: {}'.format(task.id)
-    if metric not in metrics[result.device_id]:
-        metrics[result.device_id][metric] = {}
-    if task_id not in metrics[result.device_id][metric]:
-        metrics[result.device_id][metric][task_id] = []
-    metrics[result.device_id][metric][task_id].append(
+    task_id = "Task ID: {}".format(task.id)
+
+    result = metrics[task_result.device_id]
+
+    if metric not in result:
+        result[metric] = {}
+    if task_id not in result[metric]:
+        result[metric][task_id] = []
+
+    result[metric][task_id].append(
         {
-            "value": result.value,
-            "timestamp": result.completed_at,
+            "value": task_result.value,
+            "timestamp": task_result.completed_at,
         }
     )
 
@@ -52,8 +66,10 @@ def build_measurements(args):
         last_minutes = int(args.get("last"))
 
     with Session(bind=engine) as session:
-        results = session.query(TaskResultModel, TaskModel).filter(
-            TaskResultModel.status == "done", TaskModel.id == TaskResultModel.task_id
+        results = session.query(TaskResultModel, TaskModel, DeviceModel).filter(
+            TaskResultModel.status == "done",
+            TaskModel.id == TaskResultModel.task_id,
+            DeviceModel.status == DeviceStatus.active
         )
 
         if last_minutes is not None:
@@ -65,7 +81,7 @@ def build_measurements(args):
 
         metrics = {}
 
-        for task_result, original_task in results:
+        for task_result, original_task, device in results:
             if task_result.device_id not in metrics:
                 metrics[task_result.device_id] = {}
             if original_task.name == "Sense":
@@ -77,20 +93,25 @@ def build_measurements(args):
 
 
 def handle_create_task(body):
+
     # Lista de dispositivos en los que se carga la tarea.
-    devices_ids = body.get("device_ids")
+    devices_keys = body.get("device_ids")
 
-    for id in devices_ids:
-        if id not in KNOWN_DEVICES_ID:
-            return "Invalid device id", 400
+    with Session(engine) as session:
+        devices = session.query(DeviceModel)
+        known_devices = list(x.key for x in devices)
 
-    if len(devices_ids) < 1:
-        return "Must add at least one device Id", 400
+    for k in devices_keys:
+        if k not in known_devices:
+            return "Invalid device ID", 400
+
+    if len(devices_keys) < 1:
+        return "Must add at least one device ID", 400
 
     if not body.get("task_name") or not body.get("device_ids"):
         return "Invalid empty params", 400
 
-    logger.info(f'Creando tarea {body.get("task_name")} para {devices_ids}')
+    logger.info(f'Creando tarea {body.get("task_name")} para {devices_keys}')
 
     execution_type = (
         ExecutionType.periodic if body.get("periodic") else ExecutionType.once
@@ -109,12 +130,15 @@ def handle_create_task(body):
     with Session(engine) as session:
         session.add(task)
         session.commit()  # Need to commit to link by task.id
-        task_results = [
-            TaskResultModel(task_id=task.id, device_id=device_id)
-            for device_id in devices_ids
-        ]
 
-        session.add_all(task_results)
+        for key in devices_keys:
+            target_device = [x for x in session.query(DeviceModel).filter(DeviceModel.key == key)]
+
+            # Siempre deberia haber un solo dispositivo.
+            result = TaskResultModel(task_id=task.id, device_id=target_device[0].id)
+
+            session.add(result)
+
         session.commit()
 
     return make_response("Created OK", 201)
@@ -140,7 +164,14 @@ def handle_modify_task(body):
 
 
 def normalize_task_result(r: TaskResultModel):
-    return {"id": r.id, "value": r.value, "device_id": r.device_id, "status": r.status}
+    return {
+        "id": r.id,
+        "value": r.value,
+        "device_key": r.device.key,
+        "device_status": r.device.status,
+        "device_name": r.device.name,
+        "status": r.status
+    }
 
 
 def normalize_task(task: TaskModel):
@@ -155,7 +186,7 @@ def normalize_task(task: TaskModel):
     }
 
 
-# { device_id: <device_id>, task_name: <task_name>, perio}
+# { device_id: <device_id>, task_name: <task_name>, perio... }
 def handle_get_active_tasks():
 
     f = TaskModel.status == TaskStatus.active
@@ -163,21 +194,24 @@ def handle_get_active_tasks():
     with Session(engine) as s:
         tasks = [normalize_task(t) for t in s.query(TaskModel).filter(f)]
 
-        logger.info(f"Devolviendo: {len(tasks)} tareas activas")
+        logger.info(f"Devolviendo: {len(tasks)} tareas")
 
         response = []
 
         for t in tasks:
             for r in t["results"]:
+
                 is_pending = r["status"] == ResultStatus.pending
                 is_not_supported = r["status"] == ResultStatus.not_supported
-                if is_pending or is_not_supported :
+                device_is_active = r["device_status"] == DeviceStatus.active
+
+                if (is_pending or is_not_supported) and device_is_active:
                     response.append(
                         {
                             "id": t["id"],
                             "task_name": t["name"],
                             "task_created_at": t["created_at"],
-                            "device_id": r["device_id"],
+                            "device_id": r["device_key"],
                             "status": t["status"] if is_pending else "not_supported",
                             "execution_type": t["execution_type"],
                             "params": t["params"],
@@ -202,6 +236,8 @@ def task():
         body = json.loads(request.data) if request.data else {}
 
         if request.method == "POST":
+            # TODO falta ver el caso en que nos crean una tarea
+            # y el dispositivo se desactiva.
             return handle_create_task(body)
 
         if request.method == "DELETE":
@@ -215,3 +251,65 @@ def task():
 
     except RuntimeError:
         return make_response("Invalid params", 400)
+
+
+@api_blueprint.route("/devices/<device_key>", methods=["POST", "DELETE"])
+def devices_endpoint(device_key):
+
+    body = json.loads(request.data) if request.data else {}
+
+    if request.method == "POST":
+
+        logger.info(f"Setting device with key {device_key} as active")
+
+        name = body.get("name")
+
+        with Session(engine) as session:
+
+            target_device = (
+                sa.select(DeviceModel)
+                .where(DeviceModel.key == device_key)
+            )
+
+            results = session.execute(target_device).scalars().all()
+
+            if results:
+                (session.query(DeviceModel)
+                    .filter(DeviceModel.key == device_key)
+                    .update({ 'status': DeviceStatus.active }))
+            else:
+                session.add(DeviceModel(key=device_key, name=name))
+
+            session.commit()
+            return make_response("ok", 200)
+
+    if request.method == "DELETE":
+
+        # NUNCA eliminamos dispositivos de la base de datos
+        # siempre los desactivamos.
+
+        logger.info(f"Setting device with key {device_key} as inactive")
+
+        with Session(engine) as session:
+
+            (session.query(DeviceModel)
+                .filter(DeviceModel.key == device_key)
+                .update({ 'status': DeviceStatus.inactive }))
+
+            session.commit()
+        return make_response("Deleted OK", 200)
+
+
+def build_device_data(device_model):
+    return {
+        "id": device_model.key,
+        "name": device_model.name,
+        "is_active": device_model.status == DeviceStatus.active
+    }
+
+
+@api_blueprint.route("/devices", methods=["GET"])
+def get_devices():
+    with Session(engine) as session:
+        devices = session.query(DeviceModel)
+        return make_response({"devices": [build_device_data(d) for d in devices]}, 200)
