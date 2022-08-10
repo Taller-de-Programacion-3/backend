@@ -25,8 +25,8 @@ KNOWN_DEVICES_ID = ["esp32", "riscv", "argon", "test"]
 logger = logging.getLogger()
 
 
-def parse_led_result(metrics, result, task):
-    result = metrics[result.device_id]
+def parse_led_result(metrics, task_result, task):
+    result = metrics[task_result.device_id]
 
     if "led" not in result:
         result["led"] = {}
@@ -36,16 +36,16 @@ def parse_led_result(metrics, result, task):
     result["led"]["on"].append(
         {
             "value": 1 if task.name == "Led On" else 0,
-            "timestamp": result.completed_at
+            "timestamp": task_result.completed_at
         }
     )
 
 
-def parse_sense_result(metrics, result, task):
+def parse_sense_result(metrics, task_result, task):
     metric = task.task_params["sense_metric"]
     task_id = "Task ID: {}".format(task.id)
 
-    result = metrics[result.device_id]
+    result = metrics[task_result.device_id]
 
     if metric not in result:
         result[metric] = {}
@@ -54,8 +54,8 @@ def parse_sense_result(metrics, result, task):
 
     result[metric][task_id].append(
         {
-            "value": result.value,
-            "timestamp": result.completed_at,
+            "value": task_result.value,
+            "timestamp": task_result.completed_at,
         }
     )
 
