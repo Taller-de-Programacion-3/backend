@@ -133,7 +133,7 @@ def tasks_endpoint(device_key):
         return make_response(jsonify("ok"), 200)
     else:
         _tasks = get_device_tasks(device_key)
-        result = jsonify(tasks=list(_tasks))
+        result = json.dumps({ 'tasks': list(_tasks) })
 
         logger.info(f"Devolviendo tarea para dispositivo {device_key}, {result}")
 
