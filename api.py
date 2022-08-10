@@ -67,8 +67,9 @@ def build_measurements(args):
 
     with Session(bind=engine) as session:
         results = session.query(TaskResultModel, TaskModel, DeviceModel).filter(
-            TaskResultModel.status == "done",
+            TaskResultModel.status == ResultStatus.done,
             TaskModel.id == TaskResultModel.task_id,
+            DeviceModel.id == TaskResultModel.device_id,
             DeviceModel.status == DeviceStatus.active
         )
 
