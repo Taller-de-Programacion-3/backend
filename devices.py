@@ -107,27 +107,27 @@ def store_task_results(key, results):
                         f"Creando nuevo resultado con estado pendiente para la tarea {q_res.task.id} (periodica)"
                     )
                     next_results.append(
-                        TaskResultModel(task_id=q_res.task.id, device_id=device_id)
+                        TaskResultModel(task_id=q_res.task.id, device_id=target_device.id)
                     )
 
         session.add_all(next_results)
         session.commit()
 
 
-@devices_blueprint.route("/tasks/<device_id>", methods=["GET", "POST"])
-def tasks_endpoint(device_id):
+@devices_blueprint.route("/tasks/<device_key>", methods=["GET", "POST"])
+def tasks_endpoint(device_key):
     if request.method == "POST":
-        logger.info(f"Adding new entry for device id: {device_id}")
+        logger.info(f"Adding new entry for device id: {device_key}")
 
         # Aca asumimos que nos llega algo como
         # [{ 'id': <result_id>, 'value': <valor medido> }, ...]
         tasks_results = json.loads(request.data)
 
         # Es un resultado de alguna tarea
-        store_task_results(device_id, tasks_results)
+        store_task_results(device_key, tasks_results)
 
         return make_response(jsonify("ok"), 200)
     else:
-        _tasks = get_device_tasks(device_id)
+        _tasks = get_device_tasks(device_key)
 
         return make_response(jsonify(tasks=list(_tasks)), 200)

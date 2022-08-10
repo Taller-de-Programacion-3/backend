@@ -1,173 +1,257 @@
 {
 	"info": {
-		"_postman_id": "8bc1170b-cad6-4ef2-b955-f06825437ea0",
+		"_postman_id": "815b970e-5ca7-4b8f-bd6f-23931a338f8a",
 		"name": "taller3-mendez",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Create Task",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"device_ids\": [\"riscv\"],\n    \"task_name\": \"SENSAR\",\n    \"periodic\": false,\n    \"task_params\": {\n        \"sense_metric\": \"Temperature\",\n        \"sense_mode\": \"single\",\n        \"sense_sample_rate\": 0.1,\n        \"sense_n_samples\": 1\n    }\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+			"name": "devices",
+			"item": [
+				{
+					"name": "Get device pending tasks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backend_url}}/devices/tasks/mykey",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"devices",
+								"tasks",
+								"mykey"
+							]
 						}
-					}
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{backend_url}}/api/task",
-					"host": [
-						"{{backend_url}}"
-					],
-					"path": [
-						"api",
-						"task"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Modify Task",
-			"request": {
-				"method": "PATCH",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"id\": 1,\n    \"status\": \"inactive\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Post device tasks results",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"id\": 7,\n        \"value\": \"not_supported\"\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backend_url}}/devices/tasks/riscv",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"devices",
+								"tasks",
+								"riscv"
+							]
 						}
-					}
-				},
-				"url": {
-					"raw": "{{backend_url}}/api/task",
-					"host": [
-						"{{backend_url}}"
-					],
-					"path": [
-						"api",
-						"task"
-					]
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "Remove Task",
-			"request": {
-				"method": "DELETE",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"id\": 2\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+			"name": "api",
+			"item": [
+				{
+					"name": "Get metric results",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backend_url}}/api/measurements",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"api",
+								"measurements"
+							]
 						}
-					}
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{backend_url}}/api/task",
-					"host": [
-						"{{backend_url}}"
-					],
-					"path": [
-						"api",
-						"task"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get active tasks",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{backend_url}}/api/task",
-					"host": [
-						"{{backend_url}}"
-					],
-					"path": [
-						"api",
-						"task"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get device pending tasks",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{backend_url}}/devices/tasks/esp32",
-					"host": [
-						"{{backend_url}}"
-					],
-					"path": [
-						"devices",
-						"tasks",
-						"esp32"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Post device tasks results",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "[\n    {\n        \"id\": 11,\n        \"value\": 16\n    }\n]",
-					"options": {
-						"raw": {
-							"language": "json"
+				{
+					"name": "Get active tasks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backend_url}}/api/task",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"api",
+								"task"
+							]
 						}
-					}
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{backend_url}}/devices/tasks/argon",
-					"host": [
-						"{{backend_url}}"
-					],
-					"path": [
-						"devices",
-						"tasks",
-						"argon"
-					]
+				{
+					"name": "Create Task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"device_ids\": [\"mykey\"],\n    \"task_name\": \"Sense\",\n    \"periodic\": true,\n    \"task_params\": {\n        \"sense_metric\": \"Temperature\",\n        \"sense_mode\": \"single\",\n        \"sense_sample_rate\": 1,\n        \"sense_n_samples\": 3\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backend_url}}/api/task",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"api",
+								"task"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Modify Task",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1,\n    \"status\": \"active\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backend_url}}/api/task",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"api",
+								"task"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Task",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 5\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backend_url}}/api/task",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"api",
+								"task"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Devices",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{backend_url}}/api/devices",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"api",
+								"devices"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Device",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"riscv\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backend_url}}/api/devices/mykey",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"api",
+								"devices",
+								"mykey"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate Device",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{backend_url}}/api/devices/mykey",
+							"host": [
+								"{{backend_url}}"
+							],
+							"path": [
+								"api",
+								"devices",
+								"mykey"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get metric results",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{backend_url}}/api/measurements",
-					"host": [
-						"{{backend_url}}"
-					],
-					"path": [
-						"api",
-						"measurements"
-					]
-				}
-			},
-			"response": []
+			]
 		}
 	]
 }
