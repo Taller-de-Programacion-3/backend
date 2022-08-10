@@ -17,7 +17,8 @@ from datamodel import (
     TaskResultModel,
     ResultStatus,
     DeviceModel,
-    DeviceStatus
+    DeviceStatus,
+    TaskModel
 )
 
 devices_blueprint = Blueprint("devices", __name__)
@@ -34,9 +35,11 @@ def get_device_tasks(device_key):
         query = (
             sa.select(TaskResultModel)
             .join(DeviceModel)
+            .join(TaskModel)
             .where(
                 DeviceModel.key == device_key,
                 TaskResultModel.status == ResultStatus.pending,
+                TaskModel.status == TaskStatus.active
             )
         )
         results = session.execute(query)

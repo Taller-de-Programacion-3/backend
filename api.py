@@ -146,9 +146,16 @@ def handle_create_task(body):
 
 
 def handle_remove_task(body):
+
+    logger.info(f"Marcando tarea como inactiva {body.get('id')}")
+
     with Session(engine) as session:
-        session.query(TaskModel).filter(TaskModel.id == body.get("id")).delete()
+        (session.query(TaskModel)
+                .filter(TaskModel.id == body.get("id"))
+                .update({"status": TaskStatus.inactive }))
+
         session.commit()
+
     return make_response("Deleted OK", 200)
 
 
