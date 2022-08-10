@@ -120,11 +120,12 @@ def store_task_results(key, results):
 @devices_blueprint.route("/tasks/<device_key>", methods=["GET", "POST"])
 def tasks_endpoint(device_key):
     if request.method == "POST":
-        logger.info(f"Adding new entry for device id: {device_key}")
 
         # Aca asumimos que nos llega algo como
         # [{ 'id': <result_id>, 'value': <valor medido> }, ...]
         tasks_results = json.loads(request.data)
+
+        logger.info(f"Adding new entry for device id: {device_key} {tasks_results}")
 
         # Es un resultado de alguna tarea
         store_task_results(device_key, tasks_results)
@@ -132,5 +133,8 @@ def tasks_endpoint(device_key):
         return make_response(jsonify("ok"), 200)
     else:
         _tasks = get_device_tasks(device_key)
+        result = jsonify(tasks=list(_tasks))
 
-        return make_response(jsonify(tasks=list(_tasks)), 200)
+        logger.info(f"Devolviendo tarea para dispositivo {device_key}, {result}")
+
+        return make_response(result, 200)
